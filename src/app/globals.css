@@ -389,12 +389,27 @@ html[data-motion="off"] *::after {
     line-height: 1.05;
   }
 
+  /* The portrait is gone on paper, so nothing in the masthead should still be
+     sitting in the column it was given to make room for it — including the
+     nested facts/accounts grid, which otherwise keeps a third of the page and
+     breaks "Amsterdam, NL" across two lines. */
+  [data-resume-masthead] > *,
+  [data-resume-masthead] .grid-12 > * {
+    grid-column: 1 / -1 !important;
+  }
+
   /* Two standing facts stacked vertically waste a third of the A4 header;
      side by side they read as the contact strip they are. */
   [data-resume-masthead] dl {
     flex-direction: row !important;
     gap: 10mm !important;
     padding-top: 2mm !important;
+  }
+
+  /* On screen the introduction is a separate band with air around it. On paper
+     it is simply the paragraph that follows the heading. */
+  [data-resume-intro] {
+    margin-top: 4mm !important;
   }
 
   [data-resume-body] {

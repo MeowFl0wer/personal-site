@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getResume, getHome, getSocials, toMedia } from "@/lib/cms";
+import { getResume, getHome, getSettings, getSocials, toMedia } from "@/lib/cms";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/motion/Reveal";
 import { ArrowLink } from "@/components/ui/ArrowLink";
@@ -97,7 +97,12 @@ function EntryRow({ entry }: { entry: Entry }) {
 }
 
 export default async function AboutPage() {
-  const [resume, home, socials] = await Promise.all([getResume(), getHome(), getSocials()]);
+  const [resume, home, settings, socials] = await Promise.all([
+    getResume(),
+    getHome(),
+    getSettings(),
+    getSocials(),
+  ]);
   const portrait = toMedia(resume.portrait, `${home.name} — portrait`);
 
   const facts = [
@@ -105,11 +110,19 @@ export default async function AboutPage() {
     { label: "Currently", value: home.currently },
   ].filter((fact): fact is { label: string; value: string } => Boolean(fact.value));
 
+  // The address is spelled out next to Download CV, so the envelope in the
+  // accounts row would be the same destination twice under two different names.
+  const elsewhere = socials.filter((social) => social.platform !== "email");
+
+  const identity = portrait
+    ? "col-span-4 md:col-span-4 lg:col-span-8 lg:col-start-5"
+    : "col-span-4 md:col-span-6 lg:col-span-9";
+
   return (
     <div className="shell pt-10 md:pt-16" data-resume>
       {/* 00, not 05: this is the preface to the numbered sections, not another
           one of them. */}
-      <SectionHeader index="00" label="About Me" aside={<PrintButton />} />
+      <SectionHeader index="00" label="About Me" />
 
       {/* The masthead. Portrait and the standing facts on the left, the name and
           the introduction on the right — the arrangement a printed profile page
@@ -132,59 +145,92 @@ export default async function AboutPage() {
           </div>
         ) : null}
 
-        <div
-          data-resume-name
-          className={
-            portrait
-              ? "col-span-4 md:col-span-4 lg:col-span-8 lg:col-start-5"
-              : "col-span-4 md:col-span-6 lg:col-span-9"
-          }
-        >
-          <Reveal>
-            <h1 className="text-display font-medium">{home.name}</h1>
-            <p className="text-lead mt-3 text-muted">{resume.title}</p>
-          </Reveal>
-
-          {(resume.profile ?? []).length > 0 ? (
-            <Reveal className="mt-8 flex max-w-[62ch] flex-col gap-4 md:mt-10" delay={0.06}>
-              {(resume.profile ?? []).map((paragraph) => (
-                <p key={paragraph.text} className="text-lead pretty">
-                  {paragraph.text}
-                </p>
-              ))}
+        <div className={identity}>
+          <div data-resume-name>
+            <Reveal>
+              <h1 className="text-display font-medium">{home.name}</h1>
+              <p className="text-lead mt-3 text-muted">{resume.title}</p>
             </Reveal>
-          ) : null}
-        </div>
+          </div>
 
-        {/* Facts and accounts sit under the portrait on a wide screen and fall
-            below the prose on a narrow one, where a left rail would just be a
-            thin column of orphaned labels. */}
-        {facts.length > 0 || socials.length > 0 ? (
-          <div className="col-span-4 md:col-span-6 lg:col-span-3 lg:col-start-1 lg:-mt-2">
-            <Reveal delay={0.1}>
+          {/* What the reader came for, directly under the name. Both are link
+              affordances rather than filled buttons — see PrintButton. */}
+          <div className="mt-8 md:mt-10" data-print="hide">
+            <Reveal delay={0.06}>
+              <div className="flex flex-wrap items-baseline gap-x-8 gap-y-3">
+                <PrintButton />
+                <a
+                  href={`mailto:${settings.email}`}
+                  data-cursor-state="external"
+                  className="group inline-flex items-baseline gap-2 text-small text-muted transition-colors duration-[--duration-fast] hover:text-ink"
+                >
+                  <span className="link-underline">{settings.email}</span>
+                  <span
+                    aria-hidden="true"
+                    className="inline-block transition-transform duration-[--duration-ui] ease-[--ease-primary] group-hover:translate-x-1"
+                  >
+                    ↗
+                  </span>
+                </a>
+              </div>
+            </Reveal>
+          </div>
+
+          {/* Standing facts and accounts as two columns under the name. The
+              nested grid inherits --columns, so this splits 50/50 on a wide
+              screen and stacks on a narrow one without a second breakpoint. */}
+          {facts.length > 0 || elsewhere.length > 0 ? (
+            <div className="grid-12 mt-10 gap-y-8 md:mt-12">
               {facts.length > 0 ? (
-                <dl className="flex flex-col gap-4 border-t border-rule pt-5">
-                  {facts.map((fact) => (
-                    <div key={fact.label}>
-                      <dt className="meta text-muted">{fact.label}</dt>
-                      <dd className="mt-1 text-small">{fact.value}</dd>
-                    </div>
-                  ))}
-                </dl>
+                <div className="col-span-4 md:col-span-3 lg:col-span-6">
+                  <Reveal delay={0.08}>
+                    <dl className="flex flex-col gap-4 border-t border-rule pt-5">
+                      {facts.map((fact) => (
+                        <div key={fact.label}>
+                          <dt className="meta text-muted">{fact.label}</dt>
+                          <dd className="mt-1 text-small">{fact.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </Reveal>
+                </div>
               ) : null}
 
               {/* The Contact block below prints these as text. A row of glyphs
                   on paper is decoration with no destination. */}
-              {socials.length > 0 ? (
-                <div className="mt-8" data-print="hide">
-                  <p className="meta mb-4 text-muted">Elsewhere</p>
-                  <SocialRow links={socials} className="gap-x-6 gap-y-3" />
+              {elsewhere.length > 0 ? (
+                <div className="col-span-4 md:col-span-3 lg:col-span-6" data-print="hide">
+                  <Reveal delay={0.12}>
+                    <div className="border-t border-rule pt-5">
+                      <p className="meta mb-4 text-muted">Elsewhere</p>
+                      <SocialRow links={elsewhere} className="gap-x-6 gap-y-3" />
+                    </div>
+                  </Reveal>
                 </div>
               ) : null}
-            </Reveal>
-          </div>
-        ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
+
+      {/* The introduction gets its own row under the masthead, a step down in
+          size from the name block. At lead size beside the portrait it competed
+          with the h1; here it is prose again, and it starts at the left edge so
+          the page has somewhere to breathe between the two bands. */}
+      {(resume.profile ?? []).length > 0 ? (
+        <div data-resume-intro className="grid-12 mt-12 md:mt-16">
+          <Reveal
+            className="col-span-4 flex flex-col gap-4 md:col-span-6 lg:col-span-7 lg:col-start-1"
+            delay={0.06}
+          >
+            {(resume.profile ?? []).map((paragraph) => (
+              <p key={paragraph.text} className="max-w-[68ch] text-body pretty">
+                {paragraph.text}
+              </p>
+            ))}
+          </Reveal>
+        </div>
+      ) : null}
 
       <div className="mt-[clamp(3.5rem,10vh,7rem)] max-w-[1200px]" data-resume-body>
         {(resume.experience ?? []).length > 0 ? (
