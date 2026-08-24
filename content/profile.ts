@@ -21,7 +21,6 @@ export const profile: Profile = {
   interests: ["Technology", "Photography", "Hiking", "Travel"],
   email: "hello@example.com",
   year: "2026",
-  signOff: ["Let's make", "something", "interesting."],
   seo: {
     title: "Your Name — Developer, builder, photographer",
     description:

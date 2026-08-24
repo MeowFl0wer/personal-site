@@ -79,7 +79,6 @@ export default async function FrontendLayout({ children }: { children: React.Rea
             </main>
 
             <Footer
-              signOff={(home.signOff ?? []).map((line) => line.text)}
               socials={socials}
               name={home.name}
               year={home.year ?? ""}

@@ -1840,15 +1840,6 @@ export interface Home {
         id?: string | null;
       }[]
     | null;
-  /**
-   * The large statement in the footer, one line per row.
-   */
-  signOff?:
-    | {
-        text: string;
-        id?: string | null;
-      }[]
-    | null;
   sections?:
     | {
         block: 'hero' | 'about' | 'work' | 'life' | 'tools' | 'elsewhere';
@@ -2098,12 +2089,6 @@ export interface HomeSelect<T extends boolean = true> {
         id?: T;
       };
   intro?:
-    | T
-    | {
-        text?: T;
-        id?: T;
-      };
-  signOff?:
     | T
     | {
         text?: T;

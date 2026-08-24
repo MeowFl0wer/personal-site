@@ -148,7 +148,12 @@ export const life: LifeContent = {
         { label: "Time", value: "11h 20m" },
       ],
       body: "The sign was optimistic. So was I. We were both wrong by about the same margin.",
-      media: [photo("note-03", "Placeholder: a high pass under cloud", 2000, 1250)],
+      media: [
+        photo("note-03", "Placeholder: a high pass under cloud", 2000, 1250),
+        photo("note-11", "Placeholder: the col from below", 1600, 1067),
+        photo("ridge-01", "Placeholder: cloud filling the valley", 2000, 1250),
+        photo("japan-02", "Placeholder: the sign that lied", 1600, 1100),
+      ],
       emphasis: "full",
     },
     {
@@ -212,7 +217,13 @@ export const life: LifeContent = {
         { label: "Sea", value: "Unhelpful" },
       ],
       body: "Stood outside the whole way on the theory that it helps. Unclear whether it does.",
-      media: [photo("note-08", "Placeholder: a ferry wake", 2000, 1200)],
+      media: [
+        photo("note-08", "Placeholder: a ferry wake", 2000, 1200),
+        photo("coast-01", "Placeholder: the far shore", 2000, 1200),
+        photo("note-05", "Placeholder: the rail, wet", 1200, 1600),
+        photo("ridge-03", "Placeholder: the harbour arriving", 1400, 1000),
+        photo("note-14", "Placeholder: gulls, uninterested", 1600, 1100),
+      ],
       emphasis: "full",
     },
     {
@@ -287,7 +298,14 @@ export const life: LifeContent = {
         { label: "Days", value: "2" },
       ],
       body: "Walked out, camped, walked back. It is a different path on the way home.",
-      media: [photo("note-14", "Placeholder: a cliff path", 1600, 1100)],
+      media: [
+        photo("note-14", "Placeholder: a cliff path", 1600, 1100),
+        photo("note-01", "Placeholder: the bay from the top", 1600, 1067),
+        photo("japan-01", "Placeholder: the camp, first night", 1200, 1600),
+        photo("film-01", "Placeholder: the turn-around point", 1400, 1400),
+        photo("note-06", "Placeholder: the same path, going back", 1600, 1100),
+        photo("note-02", "Placeholder: home, eventually", 1200, 1500),
+      ],
       emphasis: "wide",
     },
     {

@@ -3,27 +3,25 @@ import { SocialRow } from "@/components/ui/SocialIcon";
 import type { Social } from "@content/types";
 
 /**
- * The footer is a full section, not a strip of small print: the sign-off is set
- * at display size and carries the bottom of every page.
+ * One line: the credit at the left, the accounts as glyphs at the right.
  *
- * Under it, one line and nothing else. It used to run four columns — accounts,
- * a copy of the navigation, the email address, and the credit — and three of
- * those were the same links the reader had already been given twice: the nav is
- * fixed at the top of every page, and the address is on /about beside the CV.
- * A footer that repeats the site back at you is filler with a border on it.
+ * It has been cut down twice, and both cuts were the same argument. It used to
+ * run four columns — accounts, a copy of the navigation, the email address, the
+ * credit — and three of those were the site repeated back at the reader. Above
+ * them sat a display-size sign-off, "Let's make something interesting.", printed
+ * at the bottom of every page: a slogan addressed to nobody, which is not a
+ * reason to keep a reader on the page, and which said the same thing on the
+ * archive as on the résumé.
  *
- * What is left is the one thing that appears nowhere else (the credit) and the
- * one set of links that genuinely leads away (the accounts, as glyphs — their
- * names are already spelled out on /about).
+ * What is left is the one thing that appears nowhere else and the one set of
+ * links that genuinely leads away.
  */
 export function Footer({
-  signOff,
   socials,
   name,
   year,
   basedIn,
 }: {
-  signOff: string[];
   socials: Social[];
   name: string;
   year: string;
@@ -31,21 +29,9 @@ export function Footer({
 }) {
   return (
     <footer data-site-footer className="mt-[var(--section-gap)] border-t border-rule">
-      <div className="shell py-16 md:py-24">
-        {signOff.length > 0 ? (
-          <Reveal stagger="line">
-            <p className="text-display max-w-[16ch] font-medium">
-              {signOff.map((line) => (
-                <span key={line} data-reveal-item className="block">
-                  {line}
-                </span>
-              ))}
-            </p>
-          </Reveal>
-        ) : null}
-
-        <Reveal className="mt-16 md:mt-24" delay={0.08}>
-          <div className="flex flex-col gap-6 border-t border-rule pt-8 md:flex-row md:items-center md:justify-between">
+      <div className="shell py-10 md:py-12">
+        <Reveal>
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <p className="meta text-muted">
               © {year} {name}
               {basedIn ? <span className="ml-3 opacity-60">{basedIn}</span> : null}

@@ -95,13 +95,6 @@ export const Home: GlobalConfig = {
               labels: { singular: "Paragraph", plural: "Paragraphs" },
               fields: [{ name: "text", type: "textarea", required: true }],
             },
-            {
-              name: "signOff",
-              type: "array",
-              labels: { singular: "Line", plural: "Lines" },
-              admin: { description: "The large statement in the footer, one line per row." },
-              fields: [{ name: "text", type: "text", required: true }],
-            },
           ],
         },
         {

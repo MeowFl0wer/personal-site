@@ -223,6 +223,57 @@ export const getLifeEntry = cache(async (slug: string): Promise<LifeDoc | null> 
   return docs[0] ?? null;
 });
 
+/**
+ * Every photograph a note carries, cover first, deduplicated by source.
+ *
+ * The archive shows a note's images as a set rather than a single cover, and a
+ * note keeps them scattered across whichever blocks it was built from — a pair
+ * here, a wide image there. Walking the layout is the only way to know how many
+ * there actually are, and doing it here rather than in the page keeps the
+ * component ignorant of the block library, which is the whole point of this file.
+ *
+ * `cap` is a hard stop: the caller decides how many it can draw, and reading a
+ * hundred-image gallery block to render four of them is waste.
+ */
+export const lifeImages = (entry: LifeDoc, cap = 8): Media[] => {
+  const found: Media[] = [];
+  const seen = new Set<string>();
+
+  const push = (ref: MediaRef, alt: string) => {
+    if (found.length >= cap) return;
+    const media = toMedia(ref, alt);
+    if (!media || seen.has(media.src)) return;
+    seen.add(media.src);
+    found.push(media);
+  };
+
+  push(entry.cover, entry.title);
+
+  for (const block of entry.layout ?? []) {
+    if (found.length >= cap) break;
+
+    switch (block.blockType) {
+      case "image":
+      case "wideImage":
+      case "fullBleedImage":
+      case "imageText":
+        // The note's title is only the fallback: toMedia prefers the alt text
+        // stored on the media document itself, which is the one an editor
+        // actually maintains.
+        push(block.image, entry.title);
+        break;
+      case "photoPair":
+        push(block.left, entry.title);
+        push(block.right, entry.title);
+        break;
+      default:
+        break;
+    }
+  }
+
+  return found;
+};
+
 /** Trail figures, skipping the ones left empty. */
 export const lifeFigures = (entry: LifeDoc) =>
   [

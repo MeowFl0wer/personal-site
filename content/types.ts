@@ -48,8 +48,6 @@ export type Profile = {
   email: string;
   /** Displayed top-right of the hero. */
   year: string;
-  /** Footer statement, one line per string. */
-  signOff: string[];
   seo: {
     title: string;
     description: string;

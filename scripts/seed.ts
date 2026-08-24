@@ -199,7 +199,6 @@ const run = async () => {
       greeting: profile.greeting,
       headline: lines(profile.headline),
       intro: lines(profile.intro),
-      signOff: lines(profile.signOff),
       sections: [
         { block: "hero", visible: true, motion: "default" },
         { block: "about", visible: true, motion: "default", label: "About" },
@@ -351,24 +350,33 @@ const run = async () => {
       });
     }
 
-    // A pair when there are two spare images, single wide images otherwise.
+    // Spare images become pairs, with a single wide image left over when the
+    // count is odd. This used to take the first two and silently drop the rest,
+    // which capped every note at three photographs no matter how many it
+    // listed — and the archive's clusters need notes that carry more.
     const rest = note.media.slice(1);
-    if (rest.length >= 2) {
-      const left = await upload(rest[0].src, rest[0].alt);
-      const right = await upload(rest[1].src, rest[1].alt);
-      if (left && right) {
-        layout.push({
-          blockType: "photoPair",
-          left,
-          right,
-          ratio: "50-50",
-          offset: true,
-          width: "wide",
-          spacing: "large",
-        });
+    for (let i = 0; i < rest.length; i += 2) {
+      const first = rest[i];
+      const second = rest[i + 1];
+
+      if (second) {
+        const left = await upload(first.src, first.alt);
+        const right = await upload(second.src, second.alt);
+        if (left && right) {
+          layout.push({
+            blockType: "photoPair",
+            left,
+            right,
+            ratio: "50-50",
+            offset: true,
+            width: "wide",
+            spacing: "large",
+          });
+        }
+        continue;
       }
-    } else if (rest.length === 1) {
-      const id = await upload(rest[0].src, rest[0].alt);
+
+      const id = await upload(first.src, first.alt);
       if (id) {
         layout.push({
           blockType: "wideImage",

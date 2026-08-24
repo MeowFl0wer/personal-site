@@ -115,3 +115,23 @@ export const workDistortion = {
   maxScaleY: 0.06,
   maxScaleX: 0.02,
 } as const;
+
+/**
+ * Life archive: rows pinch toward their own centre line as they pass the middle
+ * of the screen.
+ *
+ * Unlike workDistortion this is weighted by where the row is, not just how fast
+ * the page is moving — the squeeze peaks at the viewport centre and is gone by
+ * the edges. That is what makes it read as the page having a focal point rather
+ * than the whole list wobbling.
+ */
+export const archiveSqueeze = {
+  /** Horizontal pinch at full velocity, dead centre. 0.12 = 12% narrower. */
+  maxScaleX: 0.12,
+  /** A little vertical give, so the row compresses rather than just narrowing. */
+  maxScaleY: 0.03,
+  /** Fraction of half the viewport over which the weight falls to zero. */
+  falloff: 0.85,
+  /** Per-frame approach to the target, so a flick eases instead of snapping. */
+  follow: 0.16,
+} as const;
