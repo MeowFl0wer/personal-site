@@ -139,6 +139,18 @@ jobs.push(["life/coast-01.jpg", 2000, 1200]);
 jobs.push(["life/film-01.jpg", 1400, 1400]);
 jobs.push(["life/film-02.jpg", 1200, 1500]);
 
+// The rest of the field notes. /life shows six large, twelve compact and the
+// remainder behind Earlier posts, so there has to be enough of them to see the
+// difference between those three treatments.
+const noteShapes = [
+  [1600, 1067], [1200, 1500], [2000, 1250], [1400, 1000], [1200, 1600], [1600, 1100],
+  [1400, 1400], [2000, 1200], [1300, 1000], [1200, 1500], [1600, 1067], [1400, 1050],
+  [1200, 1600], [1600, 1100], [1500, 1000], [1200, 1500],
+];
+noteShapes.forEach(([w, h], index) => {
+  jobs.push([`life/note-${String(index + 1).padStart(2, "0")}.jpg`, w, h]);
+});
+
 // Gallery — orientation must match content/gallery.ts.
 const galleryOrientation = [
   "l", "p", "l", "p", "l", "l", "p", "l", "p", "l", "l", "p", "l", "l",
