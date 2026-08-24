@@ -19,11 +19,14 @@ export type ToolGroup = {
 export function UsedToolList({ groups }: { groups: ToolGroup[] }) {
   return (
     <ProximityField radius={110} strength={10} rotation={2.5}>
+      {/* Two groups across, not four: this list now occupies half the page
+          beside Built, so the nested grid gets half as many columns to work
+          with as it did when it ran the full width. */}
       <div className="grid-12 gap-y-14">
         {groups.map((group, index) => (
           <Reveal
             key={group.category}
-            className="col-span-4 md:col-span-3 lg:col-span-3"
+            className="col-span-4 md:col-span-3 lg:col-span-6"
             delay={index * 0.05}
             stagger="tight"
           >

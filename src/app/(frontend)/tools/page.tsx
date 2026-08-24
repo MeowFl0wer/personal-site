@@ -29,25 +29,34 @@ export default async function ToolsPage() {
     <div className="shell pt-10 md:pt-16">
       <SectionHeader index="03" label="Tools" lead={["Things I build,", "things I use."]} />
 
-      {builtItems.length > 0 ? (
-        <section className="mt-[clamp(4rem,12vh,9rem)]">
-          <Reveal>
-            <h2 className="meta">Built</h2>
-          </Reveal>
-          <RuleReveal className="mt-4 mb-10" />
-          <BuiltToolList tools={builtItems} />
-        </section>
-      ) : null}
+      {/* Two columns rather than two stacked sections. Use and Built are the
+          same page answering the same question from opposite ends, and stacking
+          them meant scrolling past all of one to reach the other. Side by side,
+          the whole answer is one screen.
 
-      {used.length > 0 ? (
-        <section className="mt-[clamp(4rem,12vh,9rem)]">
-          <Reveal>
-            <h2 className="meta">Use</h2>
-          </Reveal>
-          <RuleReveal className="mt-4 mb-14" />
-          <UsedToolList groups={used} />
-        </section>
-      ) : null}
+          They stay stacked below lg: at six columns each half is too narrow for
+          a two-column list of tool names to hold together. */}
+      <div className="grid-12 mt-[clamp(4rem,12vh,9rem)] gap-x-[clamp(2rem,4vw,5rem)] gap-y-[clamp(3.5rem,10vh,7rem)]">
+        {used.length > 0 ? (
+          <section className="col-span-4 md:col-span-6 lg:col-span-6">
+            <Reveal>
+              <h2 className="meta">Use</h2>
+            </Reveal>
+            <RuleReveal className="mt-4 mb-12" />
+            <UsedToolList groups={used} />
+          </section>
+        ) : null}
+
+        {builtItems.length > 0 ? (
+          <section className="col-span-4 md:col-span-6 lg:col-span-6">
+            <Reveal>
+              <h2 className="meta">Built</h2>
+            </Reveal>
+            <RuleReveal className="mt-4 mb-8" />
+            <BuiltToolList tools={builtItems} />
+          </section>
+        ) : null}
+      </div>
     </div>
   );
 }

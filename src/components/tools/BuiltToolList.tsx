@@ -24,47 +24,56 @@ export type BuiltToolItem = {
 /**
  * Built tools — the third consumer of the shared HoverPreview, and the reason it
  * was built as a provider rather than baked into the work list.
+ *
+ * The entry stacks rather than running as a twelve-column row. This list now
+ * lives in one half of the page beside Use, and a row of four columns inside a
+ * six-column container is four columns of two words each. The screenshot is
+ * carried by the cursor preview on a pointer device and falls back to an inline
+ * image everywhere else, which is the only place it costs vertical space.
  */
 function ToolRow({ tool, index }: { tool: BuiltToolItem; index: number }) {
   const { enabled } = useHoverPreview();
 
   const row = (
-    <div className="grid-12 items-start gap-y-4 border-b border-rule py-8">
-      <span className="meta col-span-1 text-muted">{pad(index + 1)}</span>
-
-      <div className="col-span-3 md:col-span-5 lg:col-span-5">
-        <h3 className="text-title font-medium">{tool.name}</h3>
-        <p className="mt-2 max-w-[42ch] text-small text-muted">{tool.description}</p>
-        <p className="meta mt-4 text-muted">{tool.stack.join(" / ")}</p>
-      </div>
-
+    <div className="border-b border-rule py-7">
       {!enabled && tool.preview ? (
-        <div className="relative col-span-4 aspect-[16/10] overflow-hidden bg-ink/[0.06] md:col-span-3">
+        <div className="relative mb-5 aspect-[16/10] w-full overflow-hidden bg-ink/[0.06]">
           <Image
             src={tool.preview.src}
             alt={tool.preview.alt}
             fill
-            sizes="(max-width: 768px) 40vw, 25vw"
+            sizes="(max-width: 1024px) 100vw, 45vw"
             className="object-cover"
           />
         </div>
-      ) : (
-        <div className="col-span-4 hidden lg:col-span-3 lg:block" />
-      )}
+      ) : null}
 
-      <div className="col-span-4 flex flex-col items-start gap-2 md:col-span-3 lg:col-span-3 lg:items-end">
-        {tool.links.map((link) => (
-          <ArrowLink
-            key={link.label}
-            href={link.href}
-            external={link.external}
-            arrow="↗"
-            className="text-small"
-          >
-            {link.label}
-          </ArrowLink>
-        ))}
+      <div className="flex items-baseline gap-4">
+        <span className="meta shrink-0 text-muted">{pad(index + 1)}</span>
+        <h3 className="text-title font-medium">{tool.name}</h3>
       </div>
+
+      <p className="mt-2 max-w-[46ch] text-small text-muted">{tool.description}</p>
+
+      {tool.stack.length > 0 ? (
+        <p className="meta mt-4 text-muted">{tool.stack.join(" / ")}</p>
+      ) : null}
+
+      {tool.links.length > 0 ? (
+        <div className="mt-4 flex flex-wrap gap-x-8 gap-y-2">
+          {tool.links.map((link) => (
+            <ArrowLink
+              key={link.label}
+              href={link.href}
+              external={link.external}
+              arrow="↗"
+              className="text-small"
+            >
+              {link.label}
+            </ArrowLink>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 
@@ -84,8 +93,10 @@ function ToolRow({ tool, index }: { tool: BuiltToolItem; index: number }) {
 export function BuiltToolList({ tools }: { tools: BuiltToolItem[] }) {
   return (
     <HoverPreviewProvider>
+      {/* No border-t: the section heading above already draws the rule that
+          opens this list, and two hairlines a gap apart read as a mistake. */}
       <Reveal stagger="block">
-        <ul className="border-t border-rule">
+        <ul>
           {tools.map((tool, index) => (
             <ToolRow key={tool.id} tool={tool} index={index} />
           ))}
