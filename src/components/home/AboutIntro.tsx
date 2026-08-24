@@ -1,10 +1,16 @@
 import { Reveal } from "@/components/motion/Reveal";
 import { SectionNumber } from "@/components/ui/SectionHeader";
+import { ArrowLinkLarge } from "@/components/ui/ArrowLink";
 import type { Home } from "@/payload-types";
 
 /**
  * Big-type self-introduction with three small facts alongside.
  * No card, no border, no background — just the grid and a hairline above.
+ *
+ * It closes on a link to /about, the same way Selected Work closes on the work
+ * index and Life on the life index. Every home section is now a preview of the
+ * page behind it, which is what let the Elsewhere block — a heading and a single
+ * link to that same page — be switched off.
  */
 export function AboutIntro({ home, index, label }: { home: Home; index: string; label: string }) {
   const intro = (home.intro ?? []).map((row) => row.text).filter(Boolean);
@@ -61,6 +67,13 @@ export function AboutIntro({ home, index, label }: { home: Home; index: string; 
           ) : null}
         </Reveal>
       </div>
+
+      {/* The rule is doing the same job as Life's: two columns of unequal
+          length leave a ragged bottom edge, and without a line the link reads
+          as belonging to whichever column happens to end nearest it. */}
+      <Reveal className="mt-16 flex justify-end border-t border-rule pt-8 md:mt-20" delay={0.1}>
+        <ArrowLinkLarge href="/about">About me</ArrowLinkLarge>
+      </Reveal>
     </section>
   );
 }

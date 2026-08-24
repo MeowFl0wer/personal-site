@@ -205,7 +205,11 @@ const run = async () => {
         { block: "work", visible: true, motion: "default", label: "Selected Work" },
         { block: "life", visible: true, motion: "subtle", label: "Away from the screen" },
         { block: "tools", visible: true, motion: "subtle", label: "Tools" },
-        { block: "elsewhere", visible: true, motion: "default", label: "Elsewhere" },
+        // Off, not deleted. Every other section now closes on a link to its own
+        // page, so this one was a heading and a single link to /about that the
+        // About block above already offers. The slot stays in the list so it can
+        // be checked back on in Site Settings without a code change.
+        { block: "elsewhere", visible: false, motion: "default", label: "Elsewhere" },
       ],
       _status: "published",
     },
