@@ -34,6 +34,17 @@ import type { Media, NavItem, Photo, Social } from "@content/types";
 
 const client = cache(async () => getPayload({ config }));
 
+/**
+ * The sort key for every `orderable: true` collection.
+ *
+ * It is `_order`, not `order`. Payload stores the drag-to-reorder position in a
+ * field called `_order`, and passing `order` does not error — it silently falls
+ * through and returns the collection reversed, which is exactly wrong and looks
+ * plausible enough to survive review. Naming it once means the next collection
+ * cannot get it wrong.
+ */
+const ORDER = "_order";
+
 /** True while the admin's Preview button has put us in Next's draft mode. */
 const isDraft = cache(async () => {
   try {
@@ -146,7 +157,7 @@ export const getProjects = cache(async (): Promise<ProjectDoc[]> => {
     collection: "projects",
     depth: 2,
     limit: 100,
-    sort: "order",
+    sort: ORDER,
     draft: await isDraft(),
   });
   return docs;
@@ -194,7 +205,7 @@ export const getLifeEntries = cache(async (): Promise<LifeDoc[]> => {
     collection: "life",
     depth: 2,
     limit: 100,
-    sort: "order",
+    sort: ORDER,
     draft: await isDraft(),
   });
   return docs;
@@ -229,7 +240,7 @@ export const getGallery = cache(async (): Promise<Photo[]> => {
     collection: "gallery",
     depth: 1,
     limit: 300,
-    sort: "order",
+    sort: ORDER,
   });
 
   return docs
@@ -256,7 +267,7 @@ export const getBuiltTools = cache(async (): Promise<BuiltToolDoc[]> => {
     collection: "built-tools",
     depth: 1,
     limit: 100,
-    sort: "order",
+    sort: ORDER,
   });
   return docs;
 });
@@ -276,7 +287,7 @@ export const getUsedTools = cache(async () => {
     collection: "used-tools",
     depth: 0,
     limit: 200,
-    sort: "order",
+    sort: ORDER,
   });
 
   const groups = new Map<string, { category: string; items: { name: string; note?: string; href?: string }[] }>();
