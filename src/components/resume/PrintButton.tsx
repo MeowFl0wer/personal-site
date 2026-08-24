@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
  * page you are already looking at into an A4 document — there is no second PDF
  * to maintain, and no separate resume content anywhere in this repo.
  *
- * It reads as "Download CV" because that is what the reader wants from it, but
- * it is deliberately still a link affordance rather than a filled button: the
- * site has exactly one of those (a word, a rule, an arrow) and a CV download is
- * not the thing to break it for.
+ * The one framed control on the site. It is an outline rather than a fill: the
+ * page is warm paper and a solid black slab would sit on top of it instead of
+ * in it. Hovering inverts it, which is where the fill earns its place — as the
+ * response, not the resting state. Square corners, no shadow.
  */
 export function PrintButton({ className }: { className?: string }) {
   return (
@@ -19,11 +19,13 @@ export function PrintButton({ className }: { className?: string }) {
       onClick={() => window.print()}
       data-print="hide"
       className={cn(
-        "group inline-flex items-baseline gap-2 text-small text-ink transition-colors duration-[--duration-fast]",
+        "group inline-flex items-center gap-3 border border-ink px-5 py-3",
+        "text-small font-medium text-ink",
+        "transition-colors duration-[--duration-fast] hover:bg-ink hover:text-paper",
         className,
       )}
     >
-      <span className="link-underline font-medium">Download CV</span>
+      Download CV
       <span
         aria-hidden="true"
         className="inline-block transition-transform duration-[--duration-ui] ease-[--ease-primary] group-hover:translate-y-0.5"

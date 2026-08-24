@@ -4,7 +4,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/motion/Reveal";
 import { ArrowLink } from "@/components/ui/ArrowLink";
 import { MediaFrame } from "@/components/ui/MediaFrame";
-import { SocialRow } from "@/components/ui/SocialIcon";
+import { SocialIcon, SocialRow } from "@/components/ui/SocialIcon";
 import { PrintButton } from "@/components/resume/PrintButton";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -153,24 +153,22 @@ export default async function AboutPage() {
             </Reveal>
           </div>
 
-          {/* What the reader came for, directly under the name. Both are link
-              affordances rather than filled buttons — see PrintButton. */}
+          {/* What the reader came for, directly under the name. `items-stretch`
+              is doing real work: the mail square takes its height from the CV
+              button rather than from a hard-coded size that would drift the
+              moment the type scale moves. */}
           <div className="mt-8 md:mt-10" data-print="hide">
             <Reveal delay={0.06}>
-              <div className="flex flex-wrap items-baseline gap-x-8 gap-y-3">
+              <div className="flex flex-wrap items-stretch gap-3">
                 <PrintButton />
                 <a
                   href={`mailto:${settings.email}`}
+                  aria-label={`Email ${settings.email}`}
+                  title={settings.email}
                   data-cursor-state="external"
-                  className="group inline-flex items-baseline gap-2 text-small text-muted transition-colors duration-[--duration-fast] hover:text-ink"
+                  className="inline-flex items-center justify-center border border-ink px-4 text-ink transition-colors duration-[--duration-fast] hover:bg-ink hover:text-paper"
                 >
-                  <span className="link-underline">{settings.email}</span>
-                  <span
-                    aria-hidden="true"
-                    className="inline-block transition-transform duration-[--duration-ui] ease-[--ease-primary] group-hover:translate-x-1"
-                  >
-                    ↗
-                  </span>
+                  <SocialIcon platform="email" size={18} />
                 </a>
               </div>
             </Reveal>
@@ -215,16 +213,17 @@ export default async function AboutPage() {
 
       {/* The introduction gets its own row under the masthead, a step down in
           size from the name block. At lead size beside the portrait it competed
-          with the h1; here it is prose again, and it starts at the left edge so
-          the page has somewhere to breathe between the two bands. */}
+          with the h1; here it is prose again.
+
+          It runs the full width of the shell with no character cap. A 68ch
+          measure is the textbook answer and it was wrong here: at body size it
+          broke a sentence that fits on one line into two and left half the row
+          empty. The band is two short paragraphs, not an essay. */}
       {(resume.profile ?? []).length > 0 ? (
-        <div data-resume-intro className="grid-12 mt-12 md:mt-16">
-          <Reveal
-            className="col-span-4 flex flex-col gap-4 md:col-span-6 lg:col-span-7 lg:col-start-1"
-            delay={0.06}
-          >
+        <div data-resume-intro className="mt-12 md:mt-16">
+          <Reveal className="flex flex-col gap-4" delay={0.06}>
             {(resume.profile ?? []).map((paragraph) => (
-              <p key={paragraph.text} className="max-w-[68ch] text-body pretty">
+              <p key={paragraph.text} className="text-body pretty">
                 {paragraph.text}
               </p>
             ))}
