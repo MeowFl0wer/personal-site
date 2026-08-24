@@ -164,12 +164,15 @@ const run = async () => {
       blogEnabled: false,
       cursorEnabled: true,
       webglGallery: true,
+      // About Me first: it is the page that answers "who is this", and every
+      // other route is a detail of it. Writing keeps its reserved slot at the
+      // end — `blogEnabled` above decides whether it is ever rendered.
       navigation: [
+        { route: "/about", label: "About Me", visible: true },
         { route: "/work", label: "Work", visible: true },
+        { route: "/tools", label: "Tools", visible: true },
         { route: "/life", label: "Life", visible: true },
         { route: "/blog", label: "Writing", visible: true },
-        { route: "/tools", label: "Tools", visible: true },
-        { route: "/resume", label: "Resume", visible: true },
       ],
       socials: socials.map((social) => ({
         // The schema narrows platform to the icon keys; the seed data types it
@@ -214,6 +217,9 @@ const run = async () => {
     overrideAccess: true,
     data: {
       title: resume.title,
+      portrait: resume.portrait
+        ? await upload(resume.portrait.src, resume.portrait.alt)
+        : undefined,
       profile: lines(resume.profile),
       printNote: resume.printNote,
       experience: resume.experience.map((entry) => {

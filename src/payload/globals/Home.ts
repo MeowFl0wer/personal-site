@@ -132,7 +132,7 @@ export const Home: GlobalConfig = {
                         { value: "work", label: "Selected Work" },
                         { value: "life", label: "Life Preview" },
                         { value: "tools", label: "Tools Preview" },
-                        { value: "elsewhere", label: "Resume / Contact" },
+                        { value: "elsewhere", label: "About / Contact" },
                       ],
                     },
                     { name: "visible", type: "checkbox", defaultValue: true, admin: { width: "25%" } },

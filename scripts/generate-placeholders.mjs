@@ -153,6 +153,10 @@ galleryOrientation.forEach((orientation, index) => {
 for (const id of ["tool-one", "tool-two", "tool-three"]) jobs.push([`tools/${id}.jpg`, 1400, 900]);
 jobs.push(["blog/on-restraint.jpg", 1600, 900]);
 
+// The portrait at the top of /about. 4:5 — the crop a real photograph of a
+// person is most likely to arrive in.
+jobs.push(["about/portrait.jpg", 1200, 1500]);
+
 const run = async () => {
   await fs.mkdir(OUT, { recursive: true });
   const written = await Promise.all(jobs.map(([file, w, h]) => write(file, w, h)));

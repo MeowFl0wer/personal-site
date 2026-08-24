@@ -27,8 +27,10 @@ export async function Elsewhere({
 }) {
   const socials = await getSocials();
 
+  // "The formal version" is /about: the introduction is the top of that page,
+  // the resume is the rest of it.
   const pages = [
-    { label: "Resume", href: "/resume" },
+    { label: "About Me", href: "/about" },
     ...(blogEnabled ? [{ label: "Writing", href: "/blog" }] : []),
   ];
 

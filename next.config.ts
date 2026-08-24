@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["three", "@react-three/drei"],
   },
+  // /resume became /about. The old URL has been shared, so it keeps working —
+  // permanently, because the move is not going to be reversed.
+  redirects: async () => [{ source: "/resume", destination: "/about", permanent: true }],
 };
 
 export default withPayload(nextConfig, { devBundleServerPackages: false });

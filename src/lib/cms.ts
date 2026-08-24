@@ -130,11 +130,12 @@ export const getHomeSections = cache(async () => {
   return (home.sections ?? []).filter((section) => section.visible !== false);
 });
 
-/* ------------------------------------------------------------------ resume */
+/* ---------------------------------------------------------- about / resume */
 
+/** Depth 1 so the portrait arrives as a Media document rather than its id. */
 export const getResume = cache(async (): Promise<ResumeDoc> => {
   const payload = await client();
-  return payload.findGlobal({ slug: "resume", depth: 0, draft: await isDraft() });
+  return payload.findGlobal({ slug: "resume", depth: 1, draft: await isDraft() });
 });
 
 /* ------------------------------------------------------------------- work */

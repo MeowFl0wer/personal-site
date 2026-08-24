@@ -1,27 +1,37 @@
 import type { Metadata } from "next";
-import { getResume, getHome } from "@/lib/cms";
+import { getResume, getHome, getSocials, toMedia } from "@/lib/cms";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/motion/Reveal";
 import { ArrowLink } from "@/components/ui/ArrowLink";
+import { MediaFrame } from "@/components/ui/MediaFrame";
+import { SocialRow } from "@/components/ui/SocialIcon";
 import { PrintButton } from "@/components/resume/PrintButton";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [resume, home] = await Promise.all([getResume(), getHome()]);
   return {
-    title: "Resume",
-    description: `${home.name} — ${resume.title}. Experience, education, projects and skills.`,
+    title: "About Me",
+    description: `${home.name} — ${resume.title}. Introduction, experience, education, projects and skills.`,
   };
 }
 
 /**
- * The most formal, most restrained page on the site.
+ * The most formal, most restrained page on the site — and the one that answers
+ * "who is this", which is why it opens the navigation.
+ *
+ * It is one page doing two jobs, in that order: a portrait, a name and an
+ * introduction someone actually reads, and beneath them the formal record.
+ * Splitting those into /about and /resume would have meant two pages, two URLs
+ * and the same facts maintained twice.
  *
  * Motion budget: fades and nothing else. No scroll snap, no velocity, no WebGL,
  * no video. Someone reading this is deciding whether to email me, and every
  * effect would be in their way.
  *
  * ONE data source: this same DOM is what the print stylesheet turns into an A4.
- * There is no second PDF document and no way for the two to disagree.
+ * There is no second PDF document and no way for the two to disagree. The
+ * portrait is the one thing the print version drops — a résumé is a document,
+ * not a page.
  */
 type Entry = {
   organisation: string;
@@ -86,31 +96,97 @@ function EntryRow({ entry }: { entry: Entry }) {
   );
 }
 
-export default async function ResumePage() {
-  const [resume, home] = await Promise.all([getResume(), getHome()]);
+export default async function AboutPage() {
+  const [resume, home, socials] = await Promise.all([getResume(), getHome(), getSocials()]);
+  const portrait = toMedia(resume.portrait, `${home.name} — portrait`);
+
+  const facts = [
+    { label: "Based in", value: home.basedIn },
+    { label: "Currently", value: home.currently },
+  ].filter((fact): fact is { label: string; value: string } => Boolean(fact.value));
 
   return (
     <div className="shell pt-10 md:pt-16" data-resume>
-      <SectionHeader index="04" label="Resume" aside={<PrintButton />} />
+      {/* 00, not 05: this is the preface to the numbered sections, not another
+          one of them. */}
+      <SectionHeader index="00" label="About Me" aside={<PrintButton />} />
 
-      <Reveal className="mt-12 md:mt-16" data-resume-name>
-        <h1 className="text-display font-medium">{home.name}</h1>
-        <p className="text-lead mt-3 text-muted">{resume.title}</p>
-      </Reveal>
+      {/* The masthead. Portrait and the standing facts on the left, the name and
+          the introduction on the right — the arrangement a printed profile page
+          has used for a century, and the reason it survives is that the eye
+          lands on the face and then reads. */}
+      <div data-resume-masthead className="grid-12 mt-12 items-start gap-y-10 md:mt-16">
+        {/* `data-print` has to sit on a plain element: Reveal renders its own
+            node and forwards nothing but className. */}
+        {portrait ? (
+          <div className="col-span-4 md:col-span-2 lg:col-span-3" data-print="hide">
+            <Reveal>
+              <MediaFrame
+                media={portrait}
+                ratio="4 / 5"
+                priority
+                sizes="(max-width: 639px) 60vw, (max-width: 1023px) 33vw, 24vw"
+                className="max-w-[220px] md:max-w-none"
+              />
+            </Reveal>
+          </div>
+        ) : null}
 
-      <div className="mt-[clamp(3.5rem,10vh,7rem)] max-w-[1200px]" data-resume-body>
-        {(resume.profile ?? []).length > 0 ? (
-          <Block title="Profile">
-            <Reveal className="flex max-w-[70ch] flex-col gap-4">
+        <div
+          data-resume-name
+          className={
+            portrait
+              ? "col-span-4 md:col-span-4 lg:col-span-8 lg:col-start-5"
+              : "col-span-4 md:col-span-6 lg:col-span-9"
+          }
+        >
+          <Reveal>
+            <h1 className="text-display font-medium">{home.name}</h1>
+            <p className="text-lead mt-3 text-muted">{resume.title}</p>
+          </Reveal>
+
+          {(resume.profile ?? []).length > 0 ? (
+            <Reveal className="mt-8 flex max-w-[62ch] flex-col gap-4 md:mt-10" delay={0.06}>
               {(resume.profile ?? []).map((paragraph) => (
                 <p key={paragraph.text} className="text-lead pretty">
                   {paragraph.text}
                 </p>
               ))}
             </Reveal>
-          </Block>
-        ) : null}
+          ) : null}
+        </div>
 
+        {/* Facts and accounts sit under the portrait on a wide screen and fall
+            below the prose on a narrow one, where a left rail would just be a
+            thin column of orphaned labels. */}
+        {facts.length > 0 || socials.length > 0 ? (
+          <div className="col-span-4 md:col-span-6 lg:col-span-3 lg:col-start-1 lg:-mt-2">
+            <Reveal delay={0.1}>
+              {facts.length > 0 ? (
+                <dl className="flex flex-col gap-4 border-t border-rule pt-5">
+                  {facts.map((fact) => (
+                    <div key={fact.label}>
+                      <dt className="meta text-muted">{fact.label}</dt>
+                      <dd className="mt-1 text-small">{fact.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+
+              {/* The Contact block below prints these as text. A row of glyphs
+                  on paper is decoration with no destination. */}
+              {socials.length > 0 ? (
+                <div className="mt-8" data-print="hide">
+                  <p className="meta mb-4 text-muted">Elsewhere</p>
+                  <SocialRow links={socials} className="gap-x-6 gap-y-3" />
+                </div>
+              ) : null}
+            </Reveal>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="mt-[clamp(3.5rem,10vh,7rem)] max-w-[1200px]" data-resume-body>
         {(resume.experience ?? []).length > 0 ? (
           <Block title="Experience">
             <div className="flex flex-col gap-8">

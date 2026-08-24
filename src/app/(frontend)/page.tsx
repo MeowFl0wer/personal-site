@@ -9,7 +9,7 @@ import { pad } from "@/lib/utils";
 
 /**
  * Home answers three questions and then gets out of the way: who I am, what I'm
- * doing, and where to go next. It is not a resume — /resume is.
+ * doing, and where to go next. It is not a resume — /about is.
  *
  * The order of the sections below is not written here. It comes from the CMS,
  * where the six designed sections can be dragged into any order and hidden

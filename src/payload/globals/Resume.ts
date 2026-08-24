@@ -4,24 +4,29 @@ import { previewUrl } from "../preview";
 import { revalidateGlobal } from "../hooks/revalidate";
 
 /**
- * Resume — ONE data source for both outputs.
+ * About / Resume — ONE data source for both outputs.
  *
- * /resume renders this on screen, and the print stylesheet turns that same DOM
- * into an A4 document. There is no second PDF, no `resume-pdf` collection, and
- * no way for the two to disagree. Edit once, both update.
+ * /about renders this on screen: the portrait and introduction read as a
+ * personal page, and the record beneath them is a formal resume. The print
+ * stylesheet turns that same DOM into an A4 document. There is no second PDF,
+ * no `resume-pdf` collection, and no way for the two to disagree.
+ *
+ * The slug stays `resume` on purpose. It is the database table name, and
+ * renaming a table to match a URL is a migration bought for nothing.
  */
 export const Resume: GlobalConfig = {
   slug: "resume",
-  label: "Resume",
+  label: "About",
   admin: {
     group: "Content",
-    description: "The formal version. Also what the Print / Save PDF button produces.",
-    livePreview: { url: () => previewUrl("resume", "/resume") },
-    preview: () => previewUrl("resume", "/resume"),
+    description:
+      "The /about page: portrait, introduction, and the formal record. Also what the Print / Save PDF button produces.",
+    livePreview: { url: () => previewUrl("resume", "/about") },
+    preview: () => previewUrl("resume", "/about"),
   },
   access: { read: anyone, update: ownerOnly },
   versions: { drafts: { autosave: { interval: 800 } }, max: 30 },
-  hooks: { afterChange: [revalidateGlobal(["/resume"])] },
+  hooks: { afterChange: [revalidateGlobal(["/about"])] },
   fields: [
     {
       type: "tabs",
@@ -36,9 +41,22 @@ export const Resume: GlobalConfig = {
               admin: { description: 'The formal role line, e.g. "Developer / Interface Engineer".' },
             },
             {
+              name: "portrait",
+              type: "upload",
+              relationTo: "media",
+              admin: {
+                description:
+                  "The photograph beside the introduction. A portrait crop reads best — it is displayed at 4:5. Left out of the printed A4, which is a document rather than a page.",
+              },
+            },
+            {
               name: "profile",
               type: "array",
               labels: { singular: "Paragraph", plural: "Paragraphs" },
+              admin: {
+                description:
+                  "The introduction at the top of /about, set large. Two or three paragraphs; this is the part someone actually reads.",
+              },
               fields: [{ name: "text", type: "textarea", required: true }],
             },
             { name: "printNote", type: "text", admin: { description: "Small line at the end, print included." } },

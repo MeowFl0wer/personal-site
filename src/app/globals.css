@@ -312,7 +312,7 @@ html[data-motion="off"] *::after {
 }
 
 /* ==========================================================================
-   PRINT — /resume must produce a clean A4 from the same data source.
+   PRINT — /about must produce a clean A4 resume from the same data source.
    ========================================================================== */
 
 @media print {
@@ -370,20 +370,31 @@ html[data-motion="off"] *::after {
     break-inside: avoid-page;
   }
 
-  /* /resume prints from the same DOM the screen uses, so the screen's editorial
+  /* /about prints from the same DOM the screen uses, so the screen's editorial
      rhythm has to be compressed here or the document runs to five pages.
      These override the utility margins rather than duplicating the markup. */
   [data-resume] {
     padding-top: 0 !important;
   }
 
-  [data-resume-name] {
+  /* The screen masthead is a portrait beside an introduction. On paper the
+     portrait is gone, so what is left has to close back up into a heading. */
+  [data-resume-masthead] {
     margin-top: 4mm !important;
+    row-gap: 4mm !important;
   }
 
   [data-resume-name] h1 {
     font-size: 22pt;
     line-height: 1.05;
+  }
+
+  /* Two standing facts stacked vertically waste a third of the A4 header;
+     side by side they read as the contact strip they are. */
+  [data-resume-masthead] dl {
+    flex-direction: row !important;
+    gap: 10mm !important;
+    padding-top: 2mm !important;
   }
 
   [data-resume-body] {

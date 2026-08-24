@@ -161,6 +161,8 @@ export type ResumeSkillGroup = {
 export type Resume = {
   /** Overrides Profile.roles for the formal document. */
   title: string;
+  /** The photograph at the top of /about. Omitted from print. */
+  portrait?: Media;
   profile: string[];
   experience: ResumeEntry[];
   education: ResumeEntry[];

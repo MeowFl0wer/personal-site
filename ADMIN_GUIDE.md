@@ -42,11 +42,11 @@ The left sidebar has three groups:
 ```
 Site        Users, Settings
 Media       Media
-Content     Work, Life, Gallery, Tools — Built, Tools — Use, Blog, Home, Resume
+Content     Work, Life, Gallery, Tools — Built, Tools — Use, Blog, Home, About
 ```
 
 **Collections** (Work, Life, Gallery, Tools, Blog) hold many items — you add and delete
-rows. **Globals** (Home, Resume, Settings) are single documents you edit in place.
+rows. **Globals** (Home, About, Settings) are single documents you edit in place.
 
 The **Dashboard** shows how much of everything there is and what you touched last.
 
@@ -94,7 +94,7 @@ Add, remove, or drag lines with the handles on the left.
 ☰ 03 — Selected Work
 ☰ 04 — Life Preview
 ☰ 05 — Tools Preview
-☰ 06 — Resume / Contact
+☰ 06 — About / Contact
 ```
 
 - **Drag** to reorder. The `01 / 02 / 03` labels on the live page renumber automatically.
@@ -176,7 +176,7 @@ Changes are live as soon as you save; the gallery has no draft state.
 
 ---
 
-## 7. Tools, Resume, Blog
+## 7. Tools, About, Blog
 
 ### Tools
 
@@ -188,21 +188,25 @@ Two collections:
 
 Drag to reorder in both. The categories become the column headings on `/tools`.
 
-### Resume
+### About
 
-**Content → Resume.** Five tabs: Profile, Experience, Education, Projects & Skills,
+**Content → About.** Five tabs: Profile, Experience, Education, Projects & Skills,
 Contact.
+
+The **Profile** tab is the top of the page: the role line, the portrait photograph, and
+the introduction paragraphs set in large type. Everything below it is the formal record.
 
 To add a job: **Experience** tab → **Add Role** → Organisation, Role, Start, End (or tick
 **Current**), Location, then Description paragraphs and Highlights. Drag rows to reorder —
 newest first reads best.
 
-> **The web page and the PDF are the same document.** `/resume` on screen and the
+> **The web page and the PDF are the same document.** `/about` on screen and the
 > **Print / Save PDF** button both render this one record. There is no second file to keep
 > in sync, and there is nothing you can do here that makes them disagree.
 
-To produce a PDF: open `/resume`, click **Print / Save PDF**, and choose *Save as PDF*.
-The print stylesheet hides the navigation and footer and tightens the spacing to A4.
+To produce a PDF: open `/about`, click **Print / Save PDF**, and choose *Save as PDF*.
+The print stylesheet hides the navigation, the footer and the portrait, and tightens the
+spacing to A4.
 
 ### Blog
 
@@ -213,7 +217,7 @@ block-based Body.
   you can still preview it.
 - The blog is **hidden by default**. To turn it on: **Site → Settings → Features →
   Blog Enabled**. "Writing" then appears in the navigation, in its reserved slot:
-  `Work · Life · Writing · Tools · Resume`. No code change, no redeploy.
+  `About Me · Work · Tools · Life · Writing`. No code change, no redeploy.
 
 ---
 
@@ -299,7 +303,7 @@ and the page picks the right one for the screen. Upload the original.
 
 ## 10. Draft, Preview, Publish
 
-Work, Life, Blog, Home and Resume all have drafts. Gallery and Tools do not — they are
+Work, Life, Blog, Home and About all have drafts. Gallery and Tools do not — they are
 small and structural, so a save is immediately live.
 
 The flow:

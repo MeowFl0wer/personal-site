@@ -1866,7 +1866,7 @@ export interface Home {
   createdAt?: string | null;
 }
 /**
- * The formal version. Also what the Print / Save PDF button produces.
+ * The /about page: portrait, introduction, and the formal record. Also what the Print / Save PDF button produces.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "resume".
@@ -1877,6 +1877,13 @@ export interface Resume {
    * The formal role line, e.g. "Developer / Interface Engineer".
    */
   title: string;
+  /**
+   * The photograph beside the introduction. A portrait crop reads best — it is displayed at 4:5. Left out of the printed A4, which is a document rather than a page.
+   */
+  portrait?: (number | null) | Media;
+  /**
+   * The introduction at the top of /about, set large. Two or three paragraphs; this is the part someone actually reads.
+   */
   profile?:
     | {
         text: string;
@@ -2006,7 +2013,7 @@ export interface SiteSetting {
   seoImage?: (number | null) | Media;
   navigation?:
     | {
-        route: '/work' | '/life' | '/blog' | '/tools' | '/resume' | '/gallery';
+        route: '/about' | '/work' | '/tools' | '/life' | '/blog' | '/gallery';
         label: string;
         visible?: boolean | null;
         id?: string | null;
@@ -2121,6 +2128,7 @@ export interface HomeSelect<T extends boolean = true> {
  */
 export interface ResumeSelect<T extends boolean = true> {
   title?: T;
+  portrait?: T;
   profile?:
     | T
     | {

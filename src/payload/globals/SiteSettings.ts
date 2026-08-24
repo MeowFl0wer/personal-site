@@ -87,11 +87,11 @@ export const SiteSettings: GlobalConfig = {
                       required: true,
                       admin: { width: "40%" },
                       options: [
+                        { value: "/about", label: "/about" },
                         { value: "/work", label: "/work" },
+                        { value: "/tools", label: "/tools" },
                         { value: "/life", label: "/life" },
                         { value: "/blog", label: "/blog" },
-                        { value: "/tools", label: "/tools" },
-                        { value: "/resume", label: "/resume" },
                         { value: "/gallery", label: "/gallery" },
                       ],
                     },

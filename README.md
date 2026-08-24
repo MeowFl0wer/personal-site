@@ -1,6 +1,6 @@
 # Personal site
 
-A personal digital space — work, life, photography, tools, resume, writing — with a real
+A personal digital space — about, work, life, photography, tools, writing — with a real
 admin behind it.
 
 **Editorial Minimal × Kinetic Tech.** Static is quiet: typography, whitespace, hairlines
@@ -70,7 +70,7 @@ src/
     access.ts           3 rules: public reads published, owner does everything
     blocks/             The block library — 16 designed block types
     collections/        Users, Media, Projects, Life, Gallery, Tools, Posts
-    globals/            Home, Resume, SiteSettings
+    globals/            Home, About/Resume, SiteSettings
     fields/             Shared field sets: layout presets, slug
     hooks/revalidate.ts Publish → rebuild the affected pages
     components/         Admin dashboard
@@ -144,8 +144,10 @@ the same viewer through the same transition.
 cursor, no 3D. Animations set their own start state in JavaScript, so with JS disabled
 every page renders fully visible and correct.
 
-`/resume` prints to a clean A4 from the same DOM the screen uses — one data source, two
-outputs.
+`/about` prints to a clean A4 resume from the same DOM the screen uses — one data source,
+two outputs. The portrait is the only thing the print version drops.
+
+`/resume` permanently redirects to `/about`, so links shared before the rename still land.
 
 ---
 

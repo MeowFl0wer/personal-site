@@ -104,8 +104,8 @@ Studied for content hierarchy only. No design system, component code or visual l
 
 | Project | URL | License | What was studied |
 | --- | --- | --- | --- |
-| **Simple Portfolio** (ImBIOS / and similar forks) | https://github.com/ImBIOS/simple-portfolio | MIT | `/resume` information hierarchy: Profile → Experience → Education → Projects → Skills → Contact; how much whitespace a formal page can carry. We did **not** take its card visuals. |
-| **Magic Portfolio** (once-ui-system) | https://github.com/once-ui-system/magic-portfolio | MIT | Blog + gallery content organisation, frontmatter schema shape, project→post rhythm. We did **not** adopt Once UI. |
+| **Simple Portfolio** (ImBIOS / and similar forks) | https://github.com/ImBIOS/simple-portfolio · https://simple-portfolio.vicbox.dev | MIT | Two things. The `/about` masthead — portrait, name, role line and accounts as one opening unit rather than a page banner. And the record beneath it: Profile → Experience → Education → Projects → Skills → Contact, and how much whitespace a formal page can carry. We did **not** take its card visuals or its avatar chrome. |
+| **Magic Portfolio** (once-ui-system) | https://github.com/once-ui-system/magic-portfolio · https://demo.magic-portfolio.com/about | MIT | The `/about` arrangement: standing facts (based in, currently) as a short labelled column beside the portrait, with the introduction set large next to it — so the page reads as a person before it reads as a résumé. Also blog + gallery content organisation and the project→post rhythm. We did **not** adopt Once UI, its sticky table of contents, or its timeline chrome. |
 | **Astro Resume** (srleom) | https://github.com/srleom/astro-resume | MIT | The "Tools / Uses" page split — grouped plain lists with tiny labels instead of logo grids. |
 | **developerFolio** (saadpasta) | https://github.com/saadpasta/developerFolio | MIT | Only the tone of the opening line — `Hi, I'm ... 👋`. Explicitly **not** taken: illustrations, tech-logo walls, its visual style. |
 

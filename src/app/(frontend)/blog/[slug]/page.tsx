@@ -32,7 +32,7 @@ export const generateMetadata = async ({ params }: Params): Promise<Metadata> =>
 
 /**
  * Article layout. Narrow measure, generous leading, no WebGL — the motion budget
- * here is a fade, the same as /resume.
+ * here is a fade, the same as /about.
  */
 export default async function PostPage({ params }: Params) {
   const { slug } = await params;

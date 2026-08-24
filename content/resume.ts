@@ -2,14 +2,21 @@ import type { Resume } from "./types";
 import { profile } from "./profile";
 
 /**
- * One resume, two outputs.
+ * One document, two outputs.
  *
- * /resume renders this on screen, and the print stylesheet in globals.css turns
- * the same DOM into a clean A4. There is no second PDF document to keep in sync,
- * and there never should be.
+ * /about renders this on screen — portrait, introduction and the formal record
+ * below it — and the print stylesheet in globals.css turns the same DOM into a
+ * clean A4. There is no second PDF document to keep in sync, and there never
+ * should be.
  */
 export const resume: Resume = {
   title: "Developer / Interface Engineer",
+  portrait: {
+    src: "/placeholder/about/portrait.jpg",
+    alt: `${profile.name} — portrait`,
+    width: 1200,
+    height: 1500,
+  },
   profile: [
     "Engineer and designer working on interfaces where the hard part is the data, not the button. Ten years across product, platform and a fair amount of things that were supposed to be prototypes.",
     "Comfortable owning something end to end — schema, service, interface, and the conversation about what it should have been in the first place.",
