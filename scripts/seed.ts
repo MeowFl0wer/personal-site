@@ -25,7 +25,7 @@ try {
 
 import { getPayload } from "payload";
 import config from "../src/payload.config";
-import type { Life as LifeDoc } from "../src/payload-types";
+import type { Life as LifeDoc, SiteSetting } from "../src/payload-types";
 
 import { profile, socials } from "../content/profile";
 import { projects } from "../content/projects";
@@ -70,6 +70,8 @@ const richText = (paragraphs: string[]) => ({
 });
 
 const lines = (values: string[]) => values.map((text) => ({ text }));
+
+type SocialPlatform = NonNullable<NonNullable<SiteSetting["socials"]>[number]["platform"]>;
 
 const run = async () => {
   const payload = await getPayload({ config });
@@ -170,6 +172,9 @@ const run = async () => {
         { route: "/resume", label: "Resume", visible: true },
       ],
       socials: socials.map((social) => ({
+        // The schema narrows platform to the icon keys; the seed data types it
+        // loosely as a string, so assert it here rather than duplicating the union.
+        platform: social.platform as SocialPlatform,
         label: social.label,
         href: social.href,
         handle: social.handle,

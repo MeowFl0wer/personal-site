@@ -2014,9 +2014,44 @@ export interface SiteSetting {
     | null;
   socials?:
     | {
+        /**
+         * Picks the icon.
+         */
+        platform:
+          | 'px500'
+          | 'behance'
+          | 'bilibili'
+          | 'bluesky'
+          | 'buymeacoffee'
+          | 'codeberg'
+          | 'discord'
+          | 'dribbble'
+          | 'email'
+          | 'flickr'
+          | 'github'
+          | 'gitlab'
+          | 'instagram'
+          | 'linkedin'
+          | 'mastodon'
+          | 'patreon'
+          | 'readcv'
+          | 'rss'
+          | 'soundcloud'
+          | 'spotify'
+          | 'substack'
+          | 'telegram'
+          | 'unsplash'
+          | 'vsco'
+          | 'website'
+          | 'wechat'
+          | 'weibo'
+          | 'x'
+          | 'xiaohongshu'
+          | 'youtube'
+          | 'zhihu';
         label: string;
-        href: string;
         handle?: string | null;
+        href: string;
         id?: string | null;
       }[]
     | null;
@@ -2198,9 +2233,10 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   socials?:
     | T
     | {
+        platform?: T;
         label?: T;
-        href?: T;
         handle?: T;
+        href?: T;
         id?: T;
       };
   blogEnabled?: T;

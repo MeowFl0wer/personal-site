@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Reveal } from "@/components/motion/Reveal";
+import { SocialRow } from "@/components/ui/SocialIcon";
 import type { NavItem, Social } from "@content/types";
 
 /**
@@ -42,21 +43,7 @@ export function Footer({
         <div className="grid-12 mt-16 gap-y-10 md:mt-24">
           <div className="col-span-4 md:col-span-3">
             <p className="meta mb-4 text-muted">Elsewhere</p>
-            <ul className="flex flex-col gap-2">
-              {socials.map((social) => (
-                <li key={social.label}>
-                  <a
-                    href={social.href}
-                    target={social.external ? "_blank" : undefined}
-                    rel={social.external ? "noreferrer noopener" : undefined}
-                    data-cursor-state="external"
-                    className="text-small link-underline"
-                  >
-                    {social.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <SocialRow links={socials} className="flex-col items-start gap-y-2" />
           </div>
 
           <div className="col-span-4 md:col-span-3">

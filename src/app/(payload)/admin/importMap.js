@@ -24,6 +24,7 @@ import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0
 import { HomeSectionLabel as HomeSectionLabel_24cca0dcbad676d238db1f7bf6d8c75f } from '@/payload/globals/HomeSectionLabel'
 import { EntryLabel as EntryLabel_7eced808108d5b953e30e1721a4d3b35 } from '@/payload/globals/EntryLabel'
 import { NavLabel as NavLabel_40c00c1f7eaca6a5f74abffd1b0c5075 } from '@/payload/globals/NavLabel'
+import { SocialLabel as SocialLabel_6523d6821ab139ab9695e968af72ed5b } from '@/payload/globals/SocialLabel'
 import { Dashboard as Dashboard_4f6ef188764bbc8b33c5f6a80c7e6350 } from '@/payload/components/Dashboard'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
@@ -55,6 +56,7 @@ export const importMap = {
   "@/payload/globals/HomeSectionLabel#HomeSectionLabel": HomeSectionLabel_24cca0dcbad676d238db1f7bf6d8c75f,
   "@/payload/globals/EntryLabel#EntryLabel": EntryLabel_7eced808108d5b953e30e1721a4d3b35,
   "@/payload/globals/NavLabel#NavLabel": NavLabel_40c00c1f7eaca6a5f74abffd1b0c5075,
+  "@/payload/globals/SocialLabel#SocialLabel": SocialLabel_6523d6821ab139ab9695e968af72ed5b,
   "@/payload/components/Dashboard#Dashboard": Dashboard_4f6ef188764bbc8b33c5f6a80c7e6350,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

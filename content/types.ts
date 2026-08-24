@@ -197,4 +197,6 @@ export type Post = PostFrontmatter & {
 export type Social = Link & {
   /** Short mono handle shown next to the label. */
   handle?: string;
+  /** Icon key — see src/components/ui/social-icons.ts. */
+  platform?: string;
 };

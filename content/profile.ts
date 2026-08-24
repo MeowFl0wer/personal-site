@@ -29,9 +29,16 @@ export const profile: Profile = {
   },
 };
 
+/**
+ * Social accounts. `platform` picks the icon — see
+ * src/components/ui/social-icons.ts for the full list of available marks.
+ */
 export const socials: Social[] = [
-  { label: "GitHub", href: "https://github.com/your-handle", handle: "@your-handle", external: true },
-  { label: "Instagram", href: "https://instagram.com/your-handle", handle: "@your-handle", external: true },
-  { label: "Read.cv", href: "https://read.cv/your-handle", handle: "@your-handle", external: true },
-  { label: "Email", href: `mailto:${profile.email}`, handle: profile.email, external: true },
+  { platform: "github", label: "GitHub", href: "https://github.com/your-handle", handle: "@your-handle", external: true },
+  { platform: "instagram", label: "Instagram", href: "https://instagram.com/your-handle", handle: "@your-handle", external: true },
+  { platform: "x", label: "X", href: "https://x.com/your-handle", handle: "@your-handle", external: true },
+  { platform: "bilibili", label: "Bilibili", href: "https://space.bilibili.com/your-id", handle: "your-id", external: true },
+  { platform: "xiaohongshu", label: "Xiaohongshu", href: "https://xiaohongshu.com/user/profile/your-id", handle: "@your-handle", external: true },
+  { platform: "unsplash", label: "Unsplash", href: "https://unsplash.com/@your-handle", handle: "@your-handle", external: true },
+  { platform: "email", label: "Email", href: `mailto:${profile.email}`, handle: profile.email, external: true },
 ];

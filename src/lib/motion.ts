@@ -87,11 +87,22 @@ export const spring = {
     snapStrength: 0.06,
     /** Below this angular speed, snapping takes over. */
     snapThreshold: 0.0025,
-    /** Ring tilt in radians: negative drops the right side, so photos travel
-        from lower-right to upper-left. */
-    tilt: -0.17,
-    /** Per-photo vertical stagger in world units. Deliberately small. */
-    stagger: 0.26,
+    /**
+     * Vertical swing, in world units, between a photograph on the right of the
+     * ring and one on the left. Right goes down, left goes up, so the path runs
+     * lower-right to upper-left.
+     *
+     * Applied per plane rather than by rotating the whole ring: rotating the
+     * group multiplies the offset by the ring radius (~9 units), which throws
+     * the side photographs off the screen. Here the number *is* the amplitude —
+     * ~0.6 against a 2.6-unit photo height is a shallow diagonal, which is what
+     * "interleaved, not a rollercoaster" means.
+     */
+    verticalAmplitude: 0.6,
+    /** Radians each plane leans at the extremes. Barely perceptible on purpose. */
+    lean: 0.05,
+    /** Per-photo vertical stagger in world units, so they are not one rigid plane. */
+    stagger: 0.18,
   },
 } as const;
 

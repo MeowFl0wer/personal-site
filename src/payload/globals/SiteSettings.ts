@@ -1,6 +1,7 @@
 import type { GlobalConfig } from "payload";
 import { anyone, ownerOnly } from "../access";
 import { revalidateEverything } from "../hooks/revalidate";
+import { SOCIAL_ICONS } from "@/components/ui/social-icons";
 
 /**
  * Site-wide settings, navigation and feature toggles.
@@ -104,20 +105,35 @@ export const SiteSettings: GlobalConfig = {
         },
         {
           label: "Social",
+          description:
+            "Shown as icons in the Elsewhere block and the footer. Drag to reorder.",
           fields: [
             {
               name: "socials",
               type: "array",
               labels: { singular: "Link", plural: "Social Links" },
+              admin: { components: { RowLabel: "@/payload/globals/SocialLabel#SocialLabel" } },
               fields: [
                 {
                   type: "row",
                   fields: [
-                    { name: "label", type: "text", required: true, admin: { width: "30%" } },
-                    { name: "href", type: "text", required: true, admin: { width: "45%" } },
-                    { name: "handle", type: "text", admin: { width: "25%" } },
+                    {
+                      name: "platform",
+                      type: "select",
+                      required: true,
+                      defaultValue: "website",
+                      admin: { width: "34%", description: "Picks the icon." },
+                      // Straight from the icon set, so the menu can never offer
+                      // a platform there is no glyph for.
+                      options: Object.entries(SOCIAL_ICONS)
+                        .map(([value, icon]) => ({ value, label: icon.label }))
+                        .sort((a, b) => a.label.localeCompare(b.label)),
+                    },
+                    { name: "label", type: "text", required: true, admin: { width: "33%" } },
+                    { name: "handle", type: "text", admin: { width: "33%" } },
                   ],
                 },
+                { name: "href", type: "text", required: true },
               ],
             },
           ],

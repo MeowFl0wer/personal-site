@@ -112,6 +112,7 @@ export const getSocials = cache(async (): Promise<Social[]> => {
     label: social.label,
     href: social.href,
     handle: social.handle ?? undefined,
+    platform: social.platform ?? "website",
     external: !social.href.startsWith("/"),
   }));
 });

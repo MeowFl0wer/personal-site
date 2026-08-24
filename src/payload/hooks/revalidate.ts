@@ -14,9 +14,22 @@ import type {
  * point of having drafts.
  */
 
-const log = (paths: string[]) => {
-  for (const path of paths) revalidatePath(path);
+/**
+ * `revalidatePath` only works inside a Next request or render. Seed scripts,
+ * migrations and the Payload CLI all run outside one, where there is no page
+ * cache to invalidate in the first place — so a failure there is expected and
+ * must not abort the write that triggered it.
+ */
+const safeRevalidate = (paths: string[]) => {
+  for (const path of paths) {
+    try {
+      revalidatePath(path);
+    } catch {
+      // No request context: nothing is cached yet, nothing to do.
+    }
+  }
 };
+
 
 /** For collections whose docs each own a URL. */
 export const revalidateCollection =
@@ -36,7 +49,7 @@ export const revalidateCollection =
     }
 
     payload.logger.info(`Revalidating: ${Array.from(paths).join(", ")}`);
-    log(Array.from(paths));
+    safeRevalidate(Array.from(paths));
 
     return doc;
   };
@@ -44,7 +57,7 @@ export const revalidateCollection =
 export const revalidateCollectionDelete =
   (buildPaths: (slug: string) => string[]): CollectionAfterDeleteHook =>
   ({ doc }) => {
-    if (doc?.slug) log(buildPaths(doc.slug));
+    if (doc?.slug) safeRevalidate(buildPaths(doc.slug));
     return doc;
   };
 
@@ -53,13 +66,17 @@ export const revalidateGlobal =
   (paths: string[]): GlobalAfterChangeHook =>
   ({ doc }) => {
     if (doc?._status === "draft") return doc;
-    log(paths);
+    safeRevalidate(paths);
     return doc;
   };
 
 /** Site settings touch the nav and footer, so every page is affected. */
 export const revalidateEverything: GlobalAfterChangeHook = ({ doc }) => {
-  revalidatePath("/", "layout");
+  try {
+    revalidatePath("/", "layout");
+  } catch {
+    // Outside a request context — see safeRevalidate above.
+  }
   return doc;
 };
 
@@ -67,6 +84,6 @@ export const revalidateEverything: GlobalAfterChangeHook = ({ doc }) => {
 export const revalidateAlways =
   (paths: string[]): CollectionAfterChangeHook & CollectionAfterDeleteHook =>
   ({ doc }) => {
-    log(paths);
+    safeRevalidate(paths);
     return doc;
   };

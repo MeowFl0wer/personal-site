@@ -119,12 +119,7 @@ function Ring({ photos, progress, drag, dragging, onFocus, onNearest, onInvalida
     // to the same physics as the rest of the site.
     const extra = scrollSignal.velocity * spring.ring.drive * 0.06;
 
-    if (group.current) {
-      group.current.rotation.y = s.current + extra;
-      // Constant tilt. Applied to the group rather than per-plane so the planes
-      // stay on one coherent path instead of each leaning independently.
-      group.current.rotation.z = spring.ring.tilt;
-    }
+    if (group.current) group.current.rotation.y = s.current + extra;
 
     // Per-plane visibility and fade, computed from the front-facing angle.
     let closest = 0;
@@ -153,6 +148,14 @@ function Ring({ photos, progress, drag, dragging, onFocus, onNearest, onInvalida
       const fade = 1 - clamp((magnitude - FADE_ANGLE) / (CULL_ANGLE - FADE_ANGLE), 0, 1);
       const material = mesh.material as THREE.MeshBasicMaterial;
       material.opacity = fade;
+
+      // The helix. `sin(angle)` is +1 on the right of the ring and -1 on the
+      // left, so subtracting it drops the right and lifts the left: the path
+      // reads as a shallow spiral from lower-right to upper-left, and the photo
+      // at the front (angle 0) stays exactly on the centre line.
+      const swing = Math.sin(angle);
+      mesh.position.y = items[i].offsetY - swing * spring.ring.verticalAmplitude;
+      mesh.rotation.z = -swing * spring.ring.lean;
     }
 
     if (closest !== s.nearest) {
