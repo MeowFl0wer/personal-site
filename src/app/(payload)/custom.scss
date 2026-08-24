@@ -1,0 +1,7 @@
+/* Admin chrome overrides.
+ *
+ * Deliberately almost empty: Payload's own theme already handles light and dark
+ * correctly, and fighting it here is how the admin ends up half-styled. This
+ * file styles ONLY the admin panel and is never loaded by a public page.
+ *
+ * Add overrides below if the admin ever needs to look more like the site. */

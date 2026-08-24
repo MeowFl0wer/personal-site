@@ -1,0 +1,421 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   DESIGN TOKENS
+   Editorial Minimal × Kinetic Tech
+   Static = Minimal · Interaction = Expressive
+   ========================================================================== */
+
+@theme {
+  /* ---- Colour ------------------------------------------------------- */
+  --color-paper: #f1f0eb; /* Warm White  — default surface   */
+  --color-ink: #111111; /* Near Black  — default type      */
+  --color-muted: #74746e; /* Secondary Grey                  */
+  --color-rule: rgba(0, 0, 0, 0.12); /* 1px divider     */
+  --color-rule-strong: rgba(0, 0, 0, 0.28);
+  --color-void: #0b0b0b; /* Dark section background         */
+  --color-void-ink: #f1f0eb; /* Type on dark                */
+  --color-void-rule: rgba(241, 240, 235, 0.16);
+  --color-void-muted: rgba(241, 240, 235, 0.52);
+
+  /* Accent is intentionally near-silent in v1. Change it here only. */
+  --color-accent: #b8412a;
+
+  /* ---- Type --------------------------------------------------------- */
+  --font-sans: var(--font-geist-sans), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+
+  /* Fluid type scale. Hero is deliberately enormous. */
+  /* Sized against both axes: width so the longest authored line fits the shell,
+     height so a five-line hero still leaves room for the meta row on a short
+     laptop screen. Keep hero lines under ~15 characters. */
+  --text-hero: clamp(2.5rem, min(8.2vw, 11.5vh), 8rem);
+  --text-hero--line-height: 0.88;
+  --text-hero--letter-spacing: -0.04em;
+
+  --text-display: clamp(2.25rem, 6.4vw, 5.5rem);
+  --text-display--line-height: 0.94;
+  --text-display--letter-spacing: -0.035em;
+
+  --text-headline: clamp(1.75rem, 3.4vw, 3rem);
+  --text-headline--line-height: 1.06;
+  --text-headline--letter-spacing: -0.025em;
+
+  --text-title: clamp(1.25rem, 1.9vw, 1.75rem);
+  --text-title--line-height: 1.2;
+  --text-title--letter-spacing: -0.02em;
+
+  --text-lead: clamp(1.125rem, 1.55vw, 1.5rem);
+  --text-lead--line-height: 1.45;
+  --text-lead--letter-spacing: -0.012em;
+
+  --text-body: 1rem;
+  --text-body--line-height: 1.65;
+
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.55;
+
+  --text-meta: 0.6875rem;
+  --text-meta--line-height: 1.2;
+  --text-meta--letter-spacing: 0.1em;
+
+  /* ---- Radius / shadow: intentionally minimal ------------------------ */
+  --radius-none: 0px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+
+  /* ---- Motion tokens ------------------------------------------------- */
+  --ease-primary: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --duration-fast: 260ms;
+  --duration-ui: 600ms;
+  --duration-slow: 900ms;
+  --duration-scene: 1300ms;
+}
+
+/* Non-Tailwind tokens (layout skeleton + JS-readable motion values).
+   These stay unlayered — and so must the responsive overrides below them.
+   Unlayered rules beat anything inside @layer, so a `--columns` override
+   written inside @layer components would silently never apply. */
+:root {
+  --shell-max: 1600px;
+  --gutter: clamp(20px, 4.5vw, 64px);
+  --columns: 12;
+  --section-gap: clamp(6rem, 14vh, 12rem);
+  --rule-width: 1px;
+
+  /* Mirrors of the motion tokens so TS can read one source of truth. */
+  --motion-ease-primary: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-duration-ui: 0.6;
+  --motion-duration-scene: 1.3;
+}
+
+/* One column system, three densities: 12 → 6 → 4 tracks. Because every page
+   uses `.grid-12` plus `col-span-*`, this is the only breakpoint logic the
+   layout needs. */
+@media (max-width: 1023px) {
+  :root {
+    --columns: 6;
+  }
+}
+@media (max-width: 639px) {
+  :root {
+    --columns: 4;
+  }
+}
+
+/* ==========================================================================
+   BASE
+   ========================================================================== */
+
+@layer base {
+  * {
+    min-width: 0;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Lenis owns scrolling. Native smooth-scroll must stay off. */
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Focus states are part of the design, not an afterthought. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+
+  img,
+  video,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
+}
+
+/* ==========================================================================
+   LAYOUT SKELETON
+   Every page shares the same shell, gutters and column system.
+   ========================================================================== */
+
+@layer components {
+  .shell {
+    width: 100%;
+    max-width: var(--shell-max);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .grid-12 {
+    display: grid;
+    grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+    column-gap: clamp(12px, 1.6vw, 28px);
+  }
+
+  .rule {
+    border: 0;
+    border-top: var(--rule-width) solid var(--color-rule);
+    width: 100%;
+  }
+
+  .section {
+    padding-block: var(--section-gap);
+  }
+
+  /* The one mono treatment used site-wide for labels + numbers. */
+  .meta {
+    font-family: var(--font-mono);
+    font-size: var(--text-meta);
+    line-height: var(--text-meta--line-height);
+    letter-spacing: var(--text-meta--letter-spacing);
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  .balance {
+    text-wrap: balance;
+  }
+  .pretty {
+    text-wrap: pretty;
+  }
+
+  /* Dark passage — used by /gallery and the site footer. */
+  .on-void {
+    background-color: var(--color-void);
+    color: var(--color-void-ink);
+    /* Re-point the semantic tokens rather than teaching every component about
+       dark mode. `text-ink`, `text-muted` and `border-rule` keep working. */
+    --color-ink: var(--color-void-ink);
+    --color-rule: var(--color-void-rule);
+    --color-rule-strong: rgba(241, 240, 235, 0.34);
+    --color-muted: var(--color-void-muted);
+  }
+}
+
+/* ==========================================================================
+   MOTION PRIMITIVES
+   Everything below has a no-JS and a reduced-motion resting state that is
+   already correct: elements are visible unless JS explicitly arms them.
+   ========================================================================== */
+
+@layer utilities {
+  /* NOTE: reveal/rule-reveal elements have no hidden state in CSS on purpose.
+     GSAP sets their start state at run time, so with JS disabled or motion
+     reduced the page renders fully visible with nothing to undo. */
+
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% var(--rule-width);
+    transition: background-size var(--duration-ui) var(--ease-primary);
+    padding-bottom: 0.12em;
+  }
+  .link-underline:hover,
+  .link-underline:focus-visible {
+    background-size: 100% var(--rule-width);
+  }
+
+  /* The gallery caption is remounted whenever a different photograph reaches
+     the centre of the ring, so a plain entry animation is all it needs. The
+     global reduced-motion kill switch collapses this to nothing. */
+  [data-gallery-caption] {
+    animation: caption-in var(--duration-ui) var(--ease-primary) both;
+  }
+
+  @keyframes caption-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .hide-scrollbar {
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Global kill switch. `data-motion="off"` is set by MotionProvider whenever
+   prefers-reduced-motion is on, and honoured by CSS and JS alike. */
+html[data-motion="off"] *,
+html[data-motion="off"] *::before,
+html[data-motion="off"] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* Custom cursor is desktop + fine-pointer only. */
+@media (hover: hover) and (pointer: fine) {
+  html[data-cursor="on"] body {
+    cursor: none;
+  }
+  html[data-cursor="on"] a,
+  html[data-cursor="on"] button,
+  html[data-cursor="on"] [role="button"] {
+    cursor: none;
+  }
+}
+
+/* ==========================================================================
+   PRINT — /resume must produce a clean A4 from the same data source.
+   ========================================================================== */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 14mm;
+  }
+
+  :root {
+    --gutter: 0px;
+    --section-gap: 0px;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 10.5pt;
+    line-height: 1.42;
+  }
+
+  [data-print="hide"],
+  nav[data-site-nav],
+  footer[data-site-footer] {
+    display: none !important;
+  }
+
+  [data-print="block"] {
+    display: block !important;
+  }
+
+  /* Any JS-armed element must print visible no matter what. */
+  [data-reveal],
+  [data-rule-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  a {
+    text-decoration: none;
+    color: #000 !important;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid-page;
+  }
+
+  /* Keep individual entries whole, but let sections flow across pages —
+     `break-inside: avoid` on a section taller than a page just pushes the whole
+     thing to the next sheet and leaves the first one half empty. */
+  li,
+  article {
+    break-inside: avoid-page;
+  }
+
+  /* /resume prints from the same DOM the screen uses, so the screen's editorial
+     rhythm has to be compressed here or the document runs to five pages.
+     These override the utility margins rather than duplicating the markup. */
+  [data-resume] {
+    padding-top: 0 !important;
+  }
+
+  [data-resume-name] {
+    margin-top: 4mm !important;
+  }
+
+  [data-resume-name] h1 {
+    font-size: 22pt;
+    line-height: 1.05;
+  }
+
+  [data-resume-body] {
+    margin-top: 6mm !important;
+    max-width: none !important;
+  }
+
+  [data-resume-body] section {
+    margin-top: 7mm !important;
+  }
+
+  [data-resume-body] section > hr {
+    margin-top: 1.5mm !important;
+    margin-bottom: 3mm !important;
+  }
+
+  [data-resume-body] article {
+    padding-bottom: 3mm !important;
+  }
+
+  [data-resume-body] .flex.flex-col {
+    gap: 3mm !important;
+  }
+
+  /* Body copy prints at full contrast — grey-on-white does not photocopy. */
+  [data-resume] .text-muted,
+  [data-resume] .meta {
+    color: #333 !important;
+  }
+
+  [data-resume] .text-lead {
+    font-size: 10.5pt;
+    line-height: 1.42;
+  }
+}
