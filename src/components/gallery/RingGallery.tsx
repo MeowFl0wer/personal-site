@@ -20,6 +20,11 @@ import type { Photo } from "@content/types";
  * one rigid plane. The tilt leaves the front position at dead centre, so the
  * photograph you are looking at is never thrown off-axis.
  *
+ * Direction: scrolling down turns the ring so photographs travel *up* that
+ * ellipse — in from the lower right, across the centre, out at the upper left.
+ * That is the whole point of tilting it, so the sign of the scroll term is not
+ * cosmetic: negate it and the helix runs backwards down the same path.
+ *
  * Rotation is driven by scroll progress through a tall sticky track, so wheel,
  * trackpad and touch all work without the page ever trapping the scroll — and
  * dragging adds direct manipulation on top, at roughly 1:1 with the pointer.
@@ -99,7 +104,10 @@ function Ring({ photos, progress, drag, dragging, onFocus, onNearest, onInvalida
   useFrame(() => {
     const s = state.current;
 
-    const target = progress.current * TURNS * TAU + drag.current + s.snap;
+    // Negative: φ = base + rotation, and x = r·sin φ, y = −sin φ·amplitude. A
+    // *decreasing* φ therefore carries a plane leftward and upward at the same
+    // time, which is the lower-right → upper-left travel the helix is for.
+    const target = -progress.current * TURNS * TAU + drag.current + s.snap;
 
     // Inertia: the ring chases the target rather than tracking it exactly, which
     // is what makes a flick coast.
@@ -116,8 +124,9 @@ function Ring({ photos, progress, drag, dragging, onFocus, onNearest, onInvalida
     }
 
     // Scroll speed leaks a little extra rotation in, so the ring feels attached
-    // to the same physics as the rest of the site.
-    const extra = scrollSignal.velocity * spring.ring.drive * 0.06;
+    // to the same physics as the rest of the site. Same sign as the scroll term
+    // above, or the leak fights the rotation it is supposed to exaggerate.
+    const extra = -scrollSignal.velocity * spring.ring.drive * 0.06;
 
     if (group.current) group.current.rotation.y = s.current + extra;
 
@@ -150,9 +159,10 @@ function Ring({ photos, progress, drag, dragging, onFocus, onNearest, onInvalida
       material.opacity = fade;
 
       // The helix. `sin(angle)` is +1 on the right of the ring and -1 on the
-      // left, so subtracting it drops the right and lifts the left: the path
-      // reads as a shallow spiral from lower-right to upper-left, and the photo
-      // at the front (angle 0) stays exactly on the centre line.
+      // left, so subtracting it drops the right and lifts the left: the path is
+      // a shallow diagonal from lower-right to upper-left, and the photo at the
+      // front (angle 0) stays exactly on the centre line. Which way a plane
+      // *travels* along that diagonal is set by the sign of the scroll term.
       const swing = Math.sin(angle);
       mesh.position.y = items[i].offsetY - swing * spring.ring.verticalAmplitude;
       mesh.rotation.z = -swing * spring.ring.lean;

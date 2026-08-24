@@ -156,7 +156,12 @@ export function GalleryStage({
       }
 
       // Near 1:1 with the pointer — see spring.ring.dragPerPixel for why.
-      const delta = (event.clientX - lastX) * -spring.ring.dragPerPixel;
+      // Positive: the photographs go where the hand goes. Drag left and they
+      // travel up the helix, which is the same direction scrolling down turns
+      // it; drag right and they come back down it. With the sign inverted the
+      // two inputs disagreed and the ring felt like a knob rather than a thing
+      // you were holding.
+      const delta = (event.clientX - lastX) * spring.ring.dragPerPixel;
       lastX = event.clientX;
       drag.current += delta;
       velocity = delta;
