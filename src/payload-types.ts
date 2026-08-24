@@ -2032,6 +2032,7 @@ export interface SiteSetting {
           | 'buymeacoffee'
           | 'codeberg'
           | 'discord'
+          | 'douyin'
           | 'dribbble'
           | 'email'
           | 'flickr'

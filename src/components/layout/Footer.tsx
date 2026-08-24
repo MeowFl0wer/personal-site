@@ -1,26 +1,30 @@
-import Link from "next/link";
 import { Reveal } from "@/components/motion/Reveal";
 import { SocialRow } from "@/components/ui/SocialIcon";
-import type { NavItem, Social } from "@content/types";
+import type { Social } from "@content/types";
 
 /**
  * The footer is a full section, not a strip of small print: the sign-off is set
- * at display size and carries the bottom of every page. Every string here is
- * editable in the CMS.
+ * at display size and carries the bottom of every page.
+ *
+ * Under it, one line and nothing else. It used to run four columns — accounts,
+ * a copy of the navigation, the email address, and the credit — and three of
+ * those were the same links the reader had already been given twice: the nav is
+ * fixed at the top of every page, and the address is on /about beside the CV.
+ * A footer that repeats the site back at you is filler with a border on it.
+ *
+ * What is left is the one thing that appears nowhere else (the credit) and the
+ * one set of links that genuinely leads away (the accounts, as glyphs — their
+ * names are already spelled out on /about).
  */
 export function Footer({
   signOff,
   socials,
-  navigation,
-  email,
   name,
   year,
   basedIn,
 }: {
   signOff: string[];
   socials: Social[];
-  navigation: NavItem[];
-  email: string;
   name: string;
   year: string;
   basedIn: string;
@@ -40,44 +44,18 @@ export function Footer({
           </Reveal>
         ) : null}
 
-        <div className="grid-12 mt-16 gap-y-10 md:mt-24">
-          <div className="col-span-4 md:col-span-3">
-            <p className="meta mb-4 text-muted">Elsewhere</p>
-            <SocialRow links={socials} className="flex-col items-start gap-y-2" />
-          </div>
-
-          <div className="col-span-4 md:col-span-3">
-            <p className="meta mb-4 text-muted">Sections</p>
-            <ul className="flex flex-col gap-2">
-              {navigation.map((item) => (
-                <li key={item.href}>
-                  <Link href={item.href} className="text-small link-underline">
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <Link href="/gallery" className="text-small link-underline">
-                  Gallery
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="col-span-4 md:col-span-3">
-            <p className="meta mb-4 text-muted">Contact</p>
-            <a href={`mailto:${email}`} className="text-small link-underline">
-              {email}
-            </a>
-          </div>
-
-          <div className="col-span-4 md:col-span-3 md:justify-self-end">
+        <Reveal className="mt-16 md:mt-24" delay={0.08}>
+          <div className="flex flex-col gap-6 border-t border-rule pt-8 md:flex-row md:items-center md:justify-between">
             <p className="meta text-muted">
               © {year} {name}
+              {basedIn ? <span className="ml-3 opacity-60">{basedIn}</span> : null}
             </p>
-            {basedIn ? <p className="meta mt-2 text-muted">{basedIn}</p> : null}
+
+            {socials.length > 0 ? (
+              <SocialRow links={socials} showLabels={false} className="gap-x-6" />
+            ) : null}
           </div>
-        </div>
+        </Reveal>
       </div>
     </footer>
   );
