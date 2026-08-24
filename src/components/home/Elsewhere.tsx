@@ -1,32 +1,29 @@
-import { getSocials } from "@/lib/cms";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ArrowLink } from "@/components/ui/ArrowLink";
-import { SocialRow } from "@/components/ui/SocialIcon";
 import { Reveal } from "@/components/motion/Reveal";
 
 /**
- * The last home section.
+ * The last home section: where to go next on this site.
  *
- * Two kinds of destination, kept visually separate rather than mixed into one
- * list: the site's own formal pages as large type, and the social accounts as a
- * row of glyphs. Mixing them made "GitHub" look like a page on this site.
+ * It has been stripped to that. It used to carry a "Find me on" row of accounts
+ * and an email address underneath, and both were already somewhere better — the
+ * accounts are in the footer, which begins about a screen below this, and the
+ * address is on /about beside the CV button, which is where someone deciding to
+ * write to me actually is. Repeating them here was the home page ending on
+ * things the reader would meet again before they finished scrolling.
  *
  * When the blog toggle is switched on in Site Settings, Writing appears in the
- * first group with no other change — that is the point of the reserved slot.
+ * list with no other change — that is the point of the reserved slot.
  */
 export async function Elsewhere({
   index,
   label,
-  email,
   blogEnabled,
 }: {
   index: string;
   label: string;
-  email: string;
   blogEnabled: boolean;
 }) {
-  const socials = await getSocials();
-
   // "The formal version" is /about: the introduction is the top of that page,
   // the resume is the rest of it.
   const pages = [
@@ -52,22 +49,6 @@ export async function Elsewhere({
             </li>
           ))}
         </ul>
-      </Reveal>
-
-      {socials.length > 0 ? (
-        <Reveal className="mt-12" delay={0.08}>
-          <p className="meta mb-6 text-muted">Find me on</p>
-          <SocialRow links={socials} className="gap-x-8 gap-y-4" />
-        </Reveal>
-      ) : null}
-
-      <Reveal className="mt-14" delay={0.1}>
-        <p className="text-small text-muted">
-          Or just say hello —{" "}
-          <a href={`mailto:${email}`} className="link-underline text-ink">
-            {email}
-          </a>
-        </p>
       </Reveal>
     </section>
   );

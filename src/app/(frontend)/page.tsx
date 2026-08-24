@@ -60,7 +60,6 @@ export default async function HomePage() {
                 key={key}
                 index={index!}
                 label={section.label ?? "Elsewhere"}
-                email={settings.email}
                 blogEnabled={settings.blogEnabled === true}
               />
             );
