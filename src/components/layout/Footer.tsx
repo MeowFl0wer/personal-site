@@ -27,8 +27,13 @@ export function Footer({
   year: string;
   basedIn: string;
 }) {
+  // The margin is the footer's own spacing, smaller than a section gap. A full
+  // one is sized to separate two blocks of content; this is a hairline and a
+  // line of mono, and it does not need a third of a screen of runway in front
+  // of it. See also `.section:last-child` in globals.css, which stops the last
+  // section's trailing padding stacking on top of this.
   return (
-    <footer data-site-footer className="mt-[var(--section-gap)] border-t border-rule">
+    <footer data-site-footer className="mt-[clamp(3.5rem,8vh,6rem)] border-t border-rule">
       <div className="shell py-10 md:py-12">
         {/* `top bottom`, not Reveal's usual `top 88%`.
             The footer is the one element that always sits at the very bottom of

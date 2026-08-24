@@ -198,6 +198,16 @@
     padding-block: var(--section-gap);
   }
 
+  /* Between two sections the rhythm is deliberately two gaps — one section's
+     trailing padding plus the next one's leading padding. The last section on a
+     page has no next one, only the footer, which brings its own spacing; left
+     alone the two stack into a band of nothing about a third of a screen tall.
+     Only visible once the home page's closing block was stripped back to a
+     heading and one link, which is how it went unnoticed. */
+  .section:last-child {
+    padding-block-end: 0;
+  }
+
   /* The one mono treatment used site-wide for labels + numbers. */
   .meta {
     font-family: var(--font-mono);
