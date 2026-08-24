@@ -20,7 +20,7 @@ export default async function BlogPage() {
   return (
     <div className="shell pt-10 md:pt-16">
       <SectionHeader
-        index="05"
+        index="04"
         label="Writing"
         lead={["Notes on interfaces,", "motion, and the things", "I keep rebuilding."]}
         aside={

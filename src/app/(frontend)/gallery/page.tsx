@@ -25,7 +25,7 @@ export default async function GalleryPage() {
     <div className="on-void -mt-px min-h-screen bg-void text-void-ink">
       <div className="shell pt-10 md:pt-16">
         <Reveal>
-          <SectionNumber index="02.1" label="Gallery" />
+          <SectionNumber index="03.1" label="Gallery" />
         </Reveal>
         <RuleReveal className="mt-4" />
 

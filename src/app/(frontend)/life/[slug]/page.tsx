@@ -45,7 +45,10 @@ export default async function LifeEntryPage({ params }: Params) {
     <article className={cn(dark && "on-void bg-void pb-[clamp(4rem,12vh,9rem)]")}>
       <div className="shell pt-10 md:pt-16">
         <Reveal>
-          <SectionNumber index="02" label={entry.category} />
+          {/* "Life", not the note's category. The label names the section the
+              reader is in, and the raw category printed lowercase — `travel` —
+              was both a stale idea and a leaked database value. */}
+          <SectionNumber index="03" label="Life" />
         </Reveal>
         <RuleReveal className="mt-4" />
 

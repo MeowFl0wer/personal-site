@@ -27,7 +27,7 @@ export default async function ToolsPage() {
 
   return (
     <div className="shell pt-10 md:pt-16">
-      <SectionHeader index="03" label="Tools" lead={["Things I build,", "things I use."]} />
+      <SectionHeader index="02" label="Tools" lead={["Things I build,", "things I use."]} />
 
       {/* Two columns rather than two stacked sections. Use and Built are the
           same page answering the same question from opposite ends, and stacking

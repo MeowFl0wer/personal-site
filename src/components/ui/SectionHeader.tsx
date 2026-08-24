@@ -8,6 +8,24 @@ import { Reveal, RuleReveal } from "@/components/motion/Reveal";
  * Mono, small, uppercase, wide tracking. It is the only place mono appears at
  * the top of a page, which is what makes it read as a system rather than a font
  * choice.
+ *
+ * THE NUMBERS FOLLOW THE NAVIGATION. They are a reader's sense of where they
+ * are in the site, so a page numbered 03 must be the third thing in the nav —
+ * otherwise the number is decoration that actively misinforms. Reorder the nav
+ * in Site Settings and these have to move with it:
+ *
+ *   00    /about      preface; it is what the other sections are about
+ *   01    /work
+ *   02    /tools
+ *   03    /life
+ *   03.1  /gallery        both belong to Life, hence the decimal
+ *   03.2  /life/archive
+ *   04    /blog       the reserved Writing slot
+ *   404   not-found
+ *
+ * The home page numbers itself separately and on purpose: `page.tsx` counts the
+ * blocks the CMS has been dragged into, so home renumbers when its sections are
+ * rearranged. That sequence indexes one page; this one indexes the site.
  */
 export function SectionNumber({
   index,

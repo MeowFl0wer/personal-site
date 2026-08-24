@@ -44,7 +44,7 @@ export default async function LifePage() {
   return (
     <div className="shell pt-10 md:pt-16">
       <SectionHeader
-        index="02"
+        index="03"
         label="Life"
         lead={["Away from the screen.", "Places I've been,", "trails I've walked,", "things worth remembering."]}
         aside={

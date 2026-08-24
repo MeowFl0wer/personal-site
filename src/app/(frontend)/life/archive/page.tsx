@@ -25,7 +25,7 @@ export default async function LifeArchivePage() {
   return (
     <div className="shell pt-10 md:pt-16">
       <SectionHeader
-        index="02.2"
+        index="03.2"
         label="Archive"
         lead={["Everything, in order."]}
         aside={
