@@ -112,7 +112,6 @@ export type FieldNote = {
 
 export type LifeContent = {
   intro: string[];
-  pillars: string[];
   notes: FieldNote[];
 };
 

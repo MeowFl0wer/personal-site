@@ -19,7 +19,6 @@ const photo = (name: string, alt: string, width = 1600, height = 1100) => ({
  */
 export const life: LifeContent = {
   intro: ["Away from the screen.", "Places I've been,", "trails I've walked,", "things worth remembering."],
-  pillars: ["Hiking", "Photography", "Travel"],
   notes: [
     {
       id: "ridge-traverse",

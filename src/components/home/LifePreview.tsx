@@ -5,18 +5,16 @@ import { Reveal } from "@/components/motion/Reveal";
 import { Parallax } from "@/components/motion/Parallax";
 import { MediaFrame } from "@/components/ui/MediaFrame";
 
-const PILLAR_LABELS: Record<string, string> = {
-  hiking: "Hiking",
-  travel: "Travel",
-  photography: "Photography",
-  outdoor: "Outdoors",
-  personal: "Personal",
-  other: "Elsewhere",
-};
-
 /**
  * Home's quietest section by design — this is where the site slows down before
- * Tools and the footer. Two large images, one line of type, three words.
+ * Tools and the footer. Two large images and one line of type.
+ *
+ * It used to end with a row of category names — Hiking, Travel, Photography,
+ * Elsewhere — derived from whatever categories happened to exist. That is the
+ * same three-buckets idea /life was rebuilt to get rid of, just printed on the
+ * home page: it advertised the taxonomy as the subject, so anything outside it
+ * looked like it did not belong here. The rule it sat on stays, because the
+ * section still needs a line to close on before Explore life.
  */
 export async function LifePreview({ index, label }: { index: string; label: string }) {
   const entries = await getLifeEntries();
@@ -25,12 +23,6 @@ export async function LifePreview({ index, label }: { index: string; label: stri
   const covers = entries
     .map((entry) => toMedia(entry.cover, entry.title))
     .filter((media): media is NonNullable<typeof media> => Boolean(media));
-
-  // Pillars are derived from what actually exists, not from a second list to
-  // keep in sync.
-  const pillars = Array.from(new Set(entries.map((entry) => entry.category))).map(
-    (category) => PILLAR_LABELS[category] ?? category,
-  );
 
   return (
     <section className="shell section">
@@ -68,19 +60,7 @@ export async function LifePreview({ index, label }: { index: string; label: stri
         ) : null}
       </div>
 
-      {pillars.length > 0 ? (
-        <Reveal className="mt-16 md:mt-24" stagger="tight">
-          <ul className="flex flex-wrap items-baseline gap-x-10 gap-y-4 border-t border-rule pt-8">
-            {pillars.map((pillar) => (
-              <li key={pillar} data-reveal-item className="meta">
-                {pillar}
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-      ) : null}
-
-      <Reveal className="mt-10 flex justify-end" delay={0.1}>
+      <Reveal className="mt-16 flex justify-end border-t border-rule pt-8 md:mt-24" delay={0.1}>
         <ArrowLinkLarge href="/life">Explore life</ArrowLinkLarge>
       </Reveal>
     </section>
