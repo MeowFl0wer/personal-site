@@ -32,24 +32,23 @@ permissions:
 env:
   # ── Where the preview answers ──────────────────────────────────────────────
   #
-  # Empty for a custom domain (demov1.euan.im), which is the intended home.
-  # For the bare project URL — MeowFl0wer.github.io/personal-site — set this to
-  # `/personal-site`, because everything then lives one directory down and Next
-  # bakes that prefix into the client bundles at build time.
-  #
-  # Set PAGES_CNAME to the custom domain to have the build emit a CNAME file.
-  # Leave it empty until the DNS record exists, or Pages will serve a domain
-  # that does not resolve.
-  BASE_PATH: ''
-  PAGES_CNAME: 'demov1.euan.im'
+  # Serving from the project URL — MeowFl0wer.github.io/personal-site — so
+  # everything lives one directory down and Next bakes that prefix into the
+  # client bundles at build time.
+  # For demov1.euan.im: add the DNS record first, then set BASE_PATH to '' and
+  # PAGES_CNAME to 'demov1.euan.im'. Both change together — a CNAME pointing at
+  # a name that does not resolve yet takes the preview offline, and a base path
+  # left set would prefix every URL on a domain that has no such directory.
+  BASE_PATH: '/personal-site'
+  PAGES_CNAME: ''
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -97,6 +96,12 @@ jobs:
           echo "Exported $(find out -name index.html | wc -l) pages."
 
       - uses: actions/configure-pages@v5
+        with:
+          # Turns Pages on the first time this runs, instead of failing with
+          # "Get Pages site failed" until somebody visits Settings → Pages. The
+          # `pages: write` permission above is what makes it allowed to.
+          enablement: true
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out

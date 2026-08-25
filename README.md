@@ -227,12 +227,16 @@ already prefixed and the one it left alone.
 It is inlined into the client bundles at build time, so switching it means rebuilding —
 which is what the workflow's `base_path` input is for.
 
-### Going live on demov1.euan.im
+### Where it publishes
 
-1. Repo → Settings → Pages → Source: **GitHub Actions**.
-2. Add a DNS `CNAME` for `demov1` → `MeowFl0wer.github.io`.
-3. Leave `PAGES_CNAME: 'demov1.euan.im'` in the workflow and `BASE_PATH` empty.
+Today, the project URL: **MeowFl0wer.github.io/personal-site**. The workflow turns Pages on
+itself the first time it runs (`enablement: true`), so there is nothing to click.
 
-Until the DNS record exists, serve it from the project URL instead: set `BASE_PATH` to
-`/personal-site` and `PAGES_CNAME` to `''`. Publishing a CNAME for a domain that does not
-resolve yet takes the preview offline.
+To move it to **demov1.euan.im**:
+
+1. Add a DNS `CNAME` for `demov1` → `MeowFl0wer.github.io`, and wait for it to resolve.
+2. In the workflow, set `BASE_PATH: ''` and `PAGES_CNAME: 'demov1.euan.im'`.
+
+Those two change **together**. A CNAME published for a name that does not resolve yet takes
+the preview offline, and a base path left set would prefix every URL on a domain that has
+no such directory.
