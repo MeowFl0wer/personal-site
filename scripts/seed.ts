@@ -73,7 +73,26 @@ const lines = (values: string[]) => values.map((text) => ({ text }));
 
 type SocialPlatform = NonNullable<NonNullable<SiteSetting["socials"]>[number]["platform"]>;
 
+/**
+ * SQLite will create the database file but not the directory holding it, and
+ * `data/` is gitignored — so it does not exist in a fresh clone or on a CI
+ * runner, and the adapter fails with `SQLITE_CANTOPEN` before Payload has said
+ * anything useful. Making it here is the difference between `npm run seed`
+ * working on a new machine and not.
+ */
+const ensureDatabaseDirectory = () => {
+  const uri = process.env.DATABASE_URI ?? "file:./data/site.db";
+  if (!uri.startsWith("file:")) return; // A remote libSQL/Turso URL owns itself.
+
+  const directory = path.dirname(path.resolve(uri.replace(/^file:/, "")));
+  if (fs.existsSync(directory)) return;
+
+  fs.mkdirSync(directory, { recursive: true });
+  console.log(`Created ${path.relative(process.cwd(), directory)}/ for the database.`);
+};
+
 const run = async () => {
+  ensureDatabaseDirectory();
   const payload = await getPayload({ config });
 
   /* ---- guard ----------------------------------------------------------- */
