@@ -229,8 +229,15 @@ which is what the workflow's `base_path` input is for.
 
 ### Where it publishes
 
-Today, the project URL: **MeowFl0wer.github.io/personal-site**. The workflow turns Pages on
-itself the first time it runs (`enablement: true`), so there is nothing to click.
+Today, the project URL: **https://meowfl0wer.github.io/personal-site/**
+
+Pages has to be enabled once before the workflow can deploy — the workflow token is not
+allowed to create the site itself, whatever `permissions` says. Already done for this repo;
+a fork needs `Settings → Pages → Source: GitHub Actions`, or:
+
+```bash
+gh api repos/OWNER/REPO/pages -X POST -f build_type=workflow
+```
 
 To move it to **demov1.euan.im**:
 

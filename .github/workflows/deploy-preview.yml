@@ -95,12 +95,15 @@ jobs:
           test -f out/.nojekyll || { echo "::error::No .nojekyll — Pages will strip _next/"; exit 1; }
           echo "Exported $(find out -name index.html | wc -l) pages."
 
+      # Pages has to already exist. `enablement: true` looks like it would
+      # create it, and it cannot here — the workflow token is refused with
+      # "Resource not accessible by integration" no matter what `permissions`
+      # says, because creating a Pages site is not something the default
+      # GITHUB_TOKEN is allowed to do in this repository. It was enabled once,
+      # out of band:
+      #   gh api repos/OWNER/REPO/pages -X POST -f build_type=workflow
+      # or Settings → Pages → Source: GitHub Actions. A fork needs the same.
       - uses: actions/configure-pages@v5
-        with:
-          # Turns Pages on the first time this runs, instead of failing with
-          # "Get Pages site failed" until somebody visits Settings → Pages. The
-          # `pages: write` permission above is what makes it allowed to.
-          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
