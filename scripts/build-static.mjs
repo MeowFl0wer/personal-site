@@ -40,7 +40,6 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(root, "out");
 const PUBLIC_MEDIA = path.join(root, "public", "media");
 const HIDDEN = path.join(root, ".static-build-hidden");
-/** The build reads a copy, never the working database. See `stageDatabase`. */
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const CNAME = process.env.PAGES_CNAME ?? "";
@@ -121,13 +120,11 @@ const copyMedia = () => {
 
   if (!fs.existsSync(source)) {
     log("no media/ directory — nothing to copy");
-    return 0;
+    return;
   }
 
   fs.cpSync(source, PUBLIC_MEDIA, { recursive: true });
-  const count = fs.readdirSync(PUBLIC_MEDIA).length;
-  log(`copied ${count} media files into public/media/`);
-  return count;
+  log(`copied ${fs.readdirSync(PUBLIC_MEDIA).length} media files into public/media/`);
 };
 
 /**
@@ -204,8 +201,6 @@ const rewriteExportedMediaUrls = () => {
 
   walk(OUT);
   log(`rewrote ${occurrences} media URLs in ${files} exported files → ${to}`);
-
-  return occurrences;
 };
 
 /** A static stand-in for the /resume → /about redirect a server would issue. */
