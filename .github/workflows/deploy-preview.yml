@@ -1,0 +1,112 @@
+name: Deploy preview to GitHub Pages
+
+# The preview of the design, published on every push to main. It is a folder of
+# HTML: no database, no CMS, no authentication, no server actions, nothing that
+# needs Node at request time. The real site will be a Next server with Payload
+# behind it, deployed elsewhere — nothing in this file or in the scripts it
+# calls is imported by application code.
+
+on:
+  push:
+    branches: [main]
+  # Lets you republish, or try a different base path, without an empty commit.
+  workflow_dispatch:
+    inputs:
+      base_path:
+        description: 'Base path — leave empty when serving from a custom domain'
+        required: false
+        default: ''
+
+concurrency:
+  group: pages
+  # Deployments are not worth queueing: if two land together the later one is
+  # the one anybody wants. `cancel-in-progress` on a half-finished *deploy*
+  # would leave the site mid-swap, so only the build is interruptible.
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+env:
+  # ── Where the preview answers ──────────────────────────────────────────────
+  #
+  # Empty for a custom domain (demov1.euan.im), which is the intended home.
+  # For the bare project URL — MeowFl0wer.github.io/personal-site — set this to
+  # `/personal-site`, because everything then lives one directory down and Next
+  # bakes that prefix into the client bundles at build time.
+  #
+  # Set PAGES_CNAME to the custom domain to have the build emit a CNAME file.
+  # Leave it empty until the DNS record exists, or Pages will serve a domain
+  # that does not resolve.
+  BASE_PATH: ''
+  PAGES_CNAME: 'demov1.euan.im'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Generate placeholder media
+        # public/placeholder/* is committed, but the generator is the source of
+        # truth for anything added since. Cheap, and keeps CI honest.
+        run: npm run placeholders
+
+      - name: Seed a throwaway database
+        # The database is a *build-time* input: the pages read their content
+        # from Payload while `next build` runs, exactly as they do on a server,
+        # and what ships is the rendered result. This database is created inside
+        # the runner and thrown away with it — nothing that follows it depends
+        # on a database existing.
+        env:
+          PAYLOAD_SECRET: ci-preview-only-not-a-real-secret
+          DATABASE_URI: file:./data/site.db
+          SEED_EMAIL: preview@example.com
+          SEED_PASSWORD: preview-only-password
+        run: npm run seed -- --force
+
+      - name: Build the static export
+        env:
+          PAYLOAD_SECRET: ci-preview-only-not-a-real-secret
+          DATABASE_URI: file:./data/site.db
+          NEXT_PUBLIC_BASE_PATH: ${{ github.event.inputs.base_path || env.BASE_PATH }}
+          PAGES_CNAME: ${{ env.PAGES_CNAME }}
+        run: npm run build:static
+
+      - name: Check the export for server-only leftovers
+        # A static export that still points at /api/ is one that will 404 in
+        # front of a visitor rather than at build time. Fail here instead.
+        run: |
+          if grep -rlq "/api/media/file/" out; then
+            echo "::error::Media URLs still point at the Payload API route."
+            grep -rl "/api/media/file/" out | head
+            exit 1
+          fi
+          test -f out/index.html || { echo "::error::No out/index.html"; exit 1; }
+          test -f out/.nojekyll || { echo "::error::No .nojekyll — Pages will strip _next/"; exit 1; }
+          echo "Exported $(find out -name index.html | wc -l) pages."
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

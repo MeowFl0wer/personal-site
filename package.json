@@ -11,7 +11,9 @@
     "generate:types": "payload generate:types",
     "generate:importmap": "payload generate:importmap",
     "payload": "payload",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "build:static": "node scripts/build-static.mjs",
+    "preview:static": "npx serve out -l 4000"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

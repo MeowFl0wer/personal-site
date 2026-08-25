@@ -167,3 +167,72 @@ addressed through Payload, never by path.
 
 **Publishing.** Pressing Publish revalidates the affected pages. No build, no deploy, no
 commit.
+
+---
+
+## The GitHub Pages preview
+
+There are two deployments of this codebase, and only one of them runs a server.
+
+| | Preview | Real site |
+| --- | --- | --- |
+| Where | GitHub Pages — `demov1.euan.im` | own server |
+| What ships | a folder of HTML, CSS, JS and images | the Next app with Payload inside it |
+| Database at runtime | none | SQLite / libSQL |
+| `/admin`, `/api`, draft mode, redirects | not built | as documented above |
+| Updated by | pushing to `main` | pressing Publish |
+
+**`npm run build:static`** produces `out/`. Serve that directory with anything.
+
+Payload still runs *while the build runs* — the pages read their content from it exactly
+as they do on a server, and what ships is the rendered result. "No database in preview" is
+a statement about the deployed artefact, not about the machine that produced it. CI seeds a
+throwaway database inside the runner and discards it with the runner.
+
+### What the deployment is allowed to touch
+
+`src/` does not know which target it is being built for, and it must stay that way — the
+real site is the one that matters, and the preview must never become a reason to change it.
+Everything Pages-specific lives in exactly three places:
+
+- **`next.config.ts`** — one `STATIC_EXPORT` branch. Deployment config by definition.
+- **`scripts/build-static.mjs`** — the build, and the three things config cannot express.
+- **`.github/workflows/deploy-preview.yml`** — when it runs.
+
+### The three things that need a script
+
+1. **The CMS routes have to be out of the way.** `/admin/[[...segments]]` has no
+   `generateStaticParams` and `/api/[...slug]` answers POSTs — both are what a static export
+   refuses to emit. They are moved aside for the build and moved back afterwards, including
+   on failure and on Ctrl-C.
+2. **Media has to become ordinary files.** Payload serves uploads from
+   `/api/media/file/<name>`, a route that will not exist. The files are copied into
+   `public/media/` and the URLs are rewritten *in the exported output*. It has to be the
+   output: Payload derives an upload's `url` when the document is read, so rewriting the
+   database changes nothing, and it cannot be the image loader either — the gallery hands
+   raw URLs to three.js and two components set `<video src>` directly, so a third of the
+   images never pass through `next/image` at all.
+3. **`redirects` does not survive a static export.** `/resume` → `/about` is emitted as a
+   meta-refresh stub instead.
+
+### basePath
+
+`next/image` does **not** add `basePath` to `src`. That is the trap this setup is built
+around, and it is why the media rewrite understands two URL forms — the one Next has
+already prefixed and the one it left alone.
+
+- **Custom domain** (`demov1.euan.im`): `NEXT_PUBLIC_BASE_PATH` empty. This is the default.
+- **Bare project URL** (`…github.io/personal-site`): set it to `/personal-site`.
+
+It is inlined into the client bundles at build time, so switching it means rebuilding —
+which is what the workflow's `base_path` input is for.
+
+### Going live on demov1.euan.im
+
+1. Repo → Settings → Pages → Source: **GitHub Actions**.
+2. Add a DNS `CNAME` for `demov1` → `MeowFl0wer.github.io`.
+3. Leave `PAGES_CNAME: 'demov1.euan.im'` in the workflow and `BASE_PATH` empty.
+
+Until the DNS record exists, serve it from the project URL instead: set `BASE_PATH` to
+`/personal-site` and `PAGES_CNAME` to `''`. Publishing a CNAME for a domain that does not
+resolve yet takes the preview offline.
