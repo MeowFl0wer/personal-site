@@ -1993,9 +1993,9 @@ export interface SiteSetting {
   siteUrl?: string | null;
   email: string;
   /**
-   * The single accent tone. Chosen from the palette rather than picked freely, so it always sits correctly against the warm white.
+   * The single accent tone. Chosen from the palette rather than picked freely, so it always sits correctly against the ground wash.
    */
-  accentColor?: ('clay' | 'ink' | 'moss' | 'slate' | 'ochre') | null;
+  accentColor?: ('harbor' | 'clay' | 'ink' | 'moss' | 'slate' | 'ochre') | null;
   seoTitle: string;
   seoDescription: string;
   /**

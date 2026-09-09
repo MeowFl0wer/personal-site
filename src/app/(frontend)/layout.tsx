@@ -35,7 +35,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const viewport: Viewport = { themeColor: "#f1f0eb" };
+// The warm end of the ground wash — what sits behind the browser chrome at the
+// top of a page. Mirrors --wash-warm in globals.css.
+export const viewport: Viewport = { themeColor: "#f8ece4" };
 
 /**
  * The public site's shell. Completely separate from the admin's shell in

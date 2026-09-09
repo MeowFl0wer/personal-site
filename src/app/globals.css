@@ -8,18 +8,18 @@
 
 @theme {
   /* ---- Colour ------------------------------------------------------- */
-  --color-paper: #f1f0eb; /* Warm White  — default surface   */
-  --color-ink: #111111; /* Near Black  — default type      */
-  --color-muted: #74746e; /* Secondary Grey                  */
-  --color-rule: rgba(0, 0, 0, 0.12); /* 1px divider     */
-  --color-rule-strong: rgba(0, 0, 0, 0.28);
+  --color-paper: #f6f2ef; /* Warm Off-White — flat surface  */
+  --color-ink: #14161a; /* Near Black  — default type      */
+  --color-muted: #808790; /* Secondary Grey                  */
+  --color-rule: rgba(20, 22, 26, 0.08); /* 1px divider */
+  --color-rule-strong: rgba(20, 22, 26, 0.2);
   --color-void: #0b0b0b; /* Dark section background         */
   --color-void-ink: #f1f0eb; /* Type on dark                */
   --color-void-rule: rgba(241, 240, 235, 0.16);
   --color-void-muted: rgba(241, 240, 235, 0.52);
 
   /* Accent is intentionally near-silent in v1. Change it here only. */
-  --color-accent: #b8412a;
+  --color-accent: #2b6479;
 
   /* ---- Type --------------------------------------------------------- */
   --font-sans: var(--font-geist-sans), "Helvetica Neue", Arial, sans-serif;
@@ -85,6 +85,16 @@
   --section-gap: clamp(6rem, 14vh, 12rem);
   --rule-width: 1px;
 
+  /* The four stops of the ground wash. Deliberately not `--color-*`: they are
+     one gradient, not four surfaces, and generating `bg-wash-warm` utilities
+     would invite exactly the per-component colour decisions the palette
+     exists to prevent. Saturation stays under 6% — the hue should register as
+     weight, not as a colour anyone can name. */
+  --wash-warm: #f8ece4;
+  --wash-warm-fade: #f6f1ee;
+  --wash-cool-fade: #eef2f7;
+  --wash-cool: #e7eef7;
+
   /* Mirrors of the motion tokens so TS can read one source of truth. */
   --motion-ease-primary: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-duration-ui: 0.6;
@@ -129,6 +139,30 @@
   }
   .lenis.lenis-stopped {
     overflow: hidden;
+  }
+
+  /* The ground is a wash, not a flat fill: warm at the top-left, cool at the
+     bottom-right, the two meeting around the middle of the viewport. It is
+     what makes the page read as bright without touching the type, which stays
+     near black.
+
+     On a fixed pseudo-element rather than `background-attachment: fixed`,
+     which iOS Safari quietly downgrades to `scroll` and repaints badly under
+     momentum scrolling. `--color-paper` remains the flat fallback: it is what
+     `bg-paper` paints, and what shows if this never renders. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(
+      158deg,
+      var(--wash-warm) 0%,
+      var(--wash-warm-fade) 30%,
+      var(--wash-cool-fade) 68%,
+      var(--wash-cool) 100%
+    );
   }
 
   body {

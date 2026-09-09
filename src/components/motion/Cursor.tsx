@@ -112,13 +112,13 @@ export function Cursor() {
         ref={dot}
         aria-hidden="true"
         className="pointer-events-none fixed top-0 left-0 z-[100] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink mix-blend-difference"
-        style={{ willChange: "transform", backgroundColor: "#f1f0eb" }}
+        style={{ willChange: "transform", backgroundColor: "#f6f2ef" }}
       />
       <div
         ref={label}
         aria-hidden="true"
         className="meta pointer-events-none fixed top-0 left-0 z-[100] -translate-x-1/2 -translate-y-1/2 rounded-full px-3 py-2 opacity-0 mix-blend-difference"
-        style={{ willChange: "transform", color: "#f1f0eb", border: "1px solid rgba(241,240,235,.6)" }}
+        style={{ willChange: "transform", color: "#f6f2ef", border: "1px solid rgba(246,242,239,.6)" }}
       >
         {state ? (LABELS[state] ?? state.toUpperCase()) : ""}
       </div>

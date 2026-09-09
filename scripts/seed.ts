@@ -177,7 +177,7 @@ const run = async () => {
       siteName: profile.shortName,
       siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
       email: profile.email,
-      accentColor: "clay",
+      accentColor: "harbor",
       seoTitle: profile.seo.title,
       seoDescription: profile.seo.description,
       blogEnabled: false,
