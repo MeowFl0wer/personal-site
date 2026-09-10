@@ -6,19 +6,22 @@
  * palette, the type and the motion stays in Git, which is what keeps every page
  * the admin builds inside the same design language.
  *
- * The wash runs sea at one corner and scrub at the other, so both a blue and a
- * green tone have somewhere to sit. Harbour is the sea itself, read off the
- * photograph the palette came from, and is the default; moss picks up the land
- * end. Clay is the one warm tone left, and on this ground it is a deliberate
- * clash rather than a safe pick.
+ * The wash runs sky at one corner and meadow at the other, so both a blue and
+ * a green tone have somewhere to sit. Harbour is the sky itself and is the
+ * default; moss picks up the meadow end.
+ *
+ * Ochre is the dirt path. It runs through every one of those ridge
+ * photographs and is the only warm note in any of them, which makes it the
+ * one tone here that adds a hue rather than echoing one — switchable from the
+ * CMS without touching this file.
  */
 const ACCENTS: Record<string, string> = {
-  harbor: "#3a6d8c",
+  harbor: "#37718f",
   clay: "#b8412a",
-  ink: "#12181c",
+  ink: "#141a16",
   moss: "#4a5a3f",
   slate: "#3f4a57",
-  ochre: "#8a6a24",
+  ochre: "#9a6b39",
 };
 
 export function AccentTheme({ accent }: { accent: string }) {

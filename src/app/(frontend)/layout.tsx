@@ -35,9 +35,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// The sea end of the ground wash — what sits behind the browser chrome at the
+// The sky end of the ground wash — what sits behind the browser chrome at the
 // top of a page. Mirrors --wash-sky in globals.css.
-export const viewport: Viewport = { themeColor: "#e2ecf2" };
+export const viewport: Viewport = { themeColor: "#e0eaf2" };
 
 /**
  * The public site's shell. Completely separate from the admin's shell in

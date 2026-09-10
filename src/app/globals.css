@@ -8,18 +8,18 @@
 
 @theme {
   /* ---- Colour ------------------------------------------------------- */
-  --color-paper: #f2f6f5; /* Cool Off-White — flat surface  */
-  --color-ink: #12181c; /* Near Black  — default type      */
-  --color-muted: #78848b; /* Secondary Grey                  */
-  --color-rule: rgba(18, 24, 28, 0.08); /* 1px divider */
-  --color-rule-strong: rgba(18, 24, 28, 0.2);
+  --color-paper: #f1f5ec; /* Cool Off-White — flat surface  */
+  --color-ink: #141a16; /* Near Black  — default type      */
+  --color-muted: #7b857c; /* Secondary Grey                  */
+  --color-rule: rgba(20, 26, 22, 0.08); /* 1px divider */
+  --color-rule-strong: rgba(20, 26, 22, 0.2);
   --color-void: #0b0b0b; /* Dark section background         */
   --color-void-ink: #f1f0eb; /* Type on dark                */
   --color-void-rule: rgba(241, 240, 235, 0.16);
   --color-void-muted: rgba(241, 240, 235, 0.52);
 
   /* Accent is intentionally near-silent in v1. Change it here only. */
-  --color-accent: #3a6d8c;
+  --color-accent: #37718f;
 
   /* ---- Type --------------------------------------------------------- */
   --font-sans: var(--font-geist-sans), "Helvetica Neue", Arial, sans-serif;
@@ -88,16 +88,16 @@
   /* The four stops of the ground wash. Deliberately not `--color-*`: they are
      one gradient, not four surfaces, and generating `bg-wash-sky` utilities
      would invite exactly the per-component colour decisions the palette
-     exists to prevent. Saturation stays under 6% — the hue should register as
+     exists to prevent. Saturation stays under 8% — the hue should register as
      weight, not as a colour anyone can name.
 
-     Sea at one corner, sunlit scrub at the other, hazy horizon where they
-     meet — the photograph the palette came from, at a hundredth of its
-     saturation. */
-  --wash-sky: #e2ecf2;
-  --wash-sky-fade: #edf3f4;
-  --wash-land-fade: #f0f4ef;
-  --wash-land: #e9f1e7;
+     Read off the ridge photographs rather than picked: sky at one corner,
+     sun-bleached meadow at the other, and the band of haze that sits on every
+     one of those horizons where the two meet. */
+  --wash-sky: #e0eaf2;
+  --wash-haze: #edf1f2;
+  --wash-meadow-fade: #f0f4ea;
+  --wash-meadow: #e8efdc;
 
   /* Mirrors of the motion tokens so TS can read one source of truth. */
   --motion-ease-primary: cubic-bezier(0.22, 1, 0.36, 1);
@@ -145,7 +145,7 @@
     overflow: hidden;
   }
 
-  /* The ground is a wash, not a flat fill: sea at the top-left, land at the
+  /* The ground is a wash, not a flat fill: sky at the top-left, meadow at the
      bottom-right, the two meeting around the middle of the viewport. It is
      what makes the page read as bright without touching the type, which stays
      near black.
@@ -163,9 +163,9 @@
     background: linear-gradient(
       158deg,
       var(--wash-sky) 0%,
-      var(--wash-sky-fade) 30%,
-      var(--wash-land-fade) 68%,
-      var(--wash-land) 100%
+      var(--wash-haze) 30%,
+      var(--wash-meadow-fade) 68%,
+      var(--wash-meadow) 100%
     );
   }
 
