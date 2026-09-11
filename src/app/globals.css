@@ -135,42 +135,11 @@
     --wash-meadow var(--duration-slow) var(--ease-primary);
 }
 
-/* The ground follows the artwork. Each block re-points the same four stops the
-   default set above declares, so nothing else in the sheet has to know that
-   more than one arrangement exists — and a theme with no block here simply
-   keeps the default wash rather than rendering colourless.
+/* The ground follows the artwork, and the colours are CMS data: the blocks
+   that set them are emitted by CollageGround, not written here. What stays is
+   the default set above — what an arrival with nothing stored gets, and the
+   fallback if the CMS has no arrangements at all. */
 
-   `ridge` is the default and deliberately has no block: it *is* the values
-   above, and duplicating them is how the two drift apart.
-
-   Set on <html> by the inline script in the frontend layout before first
-   paint, then kept in step by the collage. Unlayered, like the rest of this
-   section, so it beats anything Tailwind emits inside @layer. */
-:root[data-collage="plateau"] {
-  --wash-sky: #e3eaf0;
-  --wash-haze: #eff1ee;
-  --wash-meadow-fade: #f3f1e6;
-  --wash-meadow: #f0ead9;
-}
-
-:root[data-collage="coast"] {
-  --wash-sky: #dde8f0;
-  --wash-haze: #e9eff2;
-  --wash-meadow-fade: #eef3ee;
-  --wash-meadow: #e6efe9;
-}
-
-:root[data-collage="snow"] {
-  --wash-sky: #e1eaf3;
-  --wash-haze: #eef1f5;
-  --wash-meadow-fade: #f1f3f6;
-  --wash-meadow: #e9edf2;
-
-  /* Mirrors of the motion tokens so TS can read one source of truth. */
-  --motion-ease-primary: cubic-bezier(0.22, 1, 0.36, 1);
-  --motion-duration-ui: 0.6;
-  --motion-duration-scene: 1.3;
-}
 
 /* One column system, three densities: 12 → 6 → 4 tracks. Because every page
    uses `.grid-12` plus `col-span-*`, this is the only breakpoint logic the

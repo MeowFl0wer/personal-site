@@ -4,7 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "../globals.css";
 
-import { getSettings, getNavigation, getSocials, getHome, toMedia } from "@/lib/cms";
+import { getSettings, getNavigation, getSocials, getHome, getCollage, toMedia } from "@/lib/cms";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { PageTransition } from "@/components/motion/PageTransition";
@@ -51,11 +51,12 @@ export const viewport: Viewport = { themeColor: "#e0eaf2" };
  *   PageTransition → needs Lenis to reset scroll on route change
  */
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
-  const [settings, navigation, socials, home, { isEnabled: preview }] = await Promise.all([
+  const [settings, navigation, socials, home, collage, { isEnabled: preview }] = await Promise.all([
     getSettings(),
     getNavigation(),
     getSocials(),
     getHome(),
+    getCollage(),
     draftMode(),
   ]);
 
@@ -70,7 +71,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
       suppressHydrationWarning
     >
       <body>
-        <CollageGround />
+        <CollageGround themes={collage.themes} />
         <AccentTheme accent={settings.accentColor ?? "harbor"} />
         <MotionProvider cursorEnabled={settings.cursorEnabled !== false}>
           <SmoothScroll>

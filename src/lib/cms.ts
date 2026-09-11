@@ -15,6 +15,7 @@ import type {
   UsedTool as UsedToolDoc,
   Post as PostDoc,
 } from "@/payload-types";
+import type { CollageView } from "@/components/home/collage-types";
 import type { Media, NavItem, Photo, Social } from "@content/types";
 
 /**
@@ -139,6 +140,59 @@ export const getHome = cache(async (): Promise<HomeDoc> => {
 export const getHomeSections = cache(async () => {
   const home = await getHome();
   return (home.sections ?? []).filter((section) => section.visible !== false);
+});
+
+/**
+ * The home artwork, flattened to what the client component actually needs.
+ *
+ * Depth 2 so the uploads arrive as documents rather than ids — the collage
+ * renders on the client and has no way to resolve a relation. Arrangements
+ * without a card are dropped rather than rendered as a hole: an editor
+ * mid-edit should not take the hero down.
+ */
+export const getCollage = cache(async (): Promise<CollageView> => {
+  const payload = await client();
+  const doc = await payload.findGlobal({ slug: "collage", depth: 2, draft: await isDraft() });
+
+  const asMedia = (value: unknown) =>
+    value && typeof value === "object" && "url" in value ? (value as MediaDoc) : null;
+
+  const themes = (doc.themes ?? []).flatMap((theme) => {
+    const card = asMedia(theme.card);
+    if (!card?.url) return [];
+    return [
+      {
+        id: String(theme.id ?? theme.label),
+        label: theme.label,
+        alt: theme.alt ?? "",
+        card: { url: card.url, width: card.width ?? 0, height: card.height ?? 0 },
+        wash: {
+          sky: theme.wash?.sky ?? "",
+          haze: theme.wash?.haze ?? "",
+          landFade: theme.wash?.landFade ?? "",
+          land: theme.wash?.land ?? "",
+        },
+        pieces: (theme.pieces ?? []).flatMap((piece) => {
+          const image = asMedia(piece.image);
+          if (!image?.url) return [];
+          return [
+            {
+              url: image.url,
+              width: image.width ?? 0,
+              height: image.height ?? 0,
+              x: piece.x,
+              y: piece.y,
+              scale: piece.width,
+              rotate: piece.rotate,
+              behind: piece.behind === true,
+            },
+          ];
+        }),
+      },
+    ];
+  });
+
+  return { autoplay: doc.autoplay !== false, dwell: doc.dwell ?? 7, themes };
 });
 
 /* ---------------------------------------------------------- about / resume */

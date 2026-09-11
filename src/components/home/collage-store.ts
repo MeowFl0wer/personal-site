@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-import { COLLAGE_STORAGE_KEY, COLLAGE_THEMES, DEFAULT_COLLAGE } from "./collage-themes";
+import { COLLAGE_STORAGE_KEY } from "./collage-types";
 
 /**
  * The chosen arrangement, kept where it actually lives: the browser.
@@ -11,17 +11,21 @@ import { COLLAGE_STORAGE_KEY, COLLAGE_THEMES, DEFAULT_COLLAGE } from "./collage-
  * through useSyncExternalStore also gives the server render an honest answer
  * ("nothing yet") without a hydration mismatch, which a useState initialiser
  * reaching for localStorage cannot.
+ *
+ * It deliberately knows nothing about which arrangements exist. Those come
+ * from the CMS now and can be renamed, reordered or deleted between one visit
+ * and the next; deciding whether a stored id is still real is the reader's
+ * job, not the store's.
  */
 const listeners = new Set<() => void>();
 
 const read = (): string => {
   try {
-    const stored = window.localStorage.getItem(COLLAGE_STORAGE_KEY);
-    if (stored && COLLAGE_THEMES.some((theme) => theme.id === stored)) return stored;
+    return window.localStorage.getItem(COLLAGE_STORAGE_KEY) ?? "";
   } catch {
-    // Private windows and blocked site data both throw. The default stands.
+    // Private windows and blocked site data both throw. Nothing is stored.
+    return "";
   }
-  return DEFAULT_COLLAGE;
 };
 
 export const collageStore = {
@@ -50,6 +54,5 @@ export const collageStore = {
   },
 };
 
-/** The hook form, so callers never have to wire the three arguments by hand. */
 export const useCollageTheme = () =>
   useSyncExternalStore(collageStore.subscribe, collageStore.get, collageStore.getServerSnapshot);

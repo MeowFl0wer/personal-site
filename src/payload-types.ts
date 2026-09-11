@@ -103,11 +103,13 @@ export interface Config {
     home: Home;
     resume: Resume;
     'site-settings': SiteSetting;
+    collage: Collage;
   };
   globalsSelect: {
     home: HomeSelect<false> | HomeSelect<true>;
     resume: ResumeSelect<false> | ResumeSelect<true>;
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    collage: CollageSelect<false> | CollageSelect<true>;
   };
   locale: null;
   widgets: {
@@ -2070,6 +2072,83 @@ export interface SiteSetting {
   createdAt?: string | null;
 }
 /**
+ * The cards and cut-outs in the right half of the home page, and the ground wash that travels with each one.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "collage".
+ */
+export interface Collage {
+  id: number;
+  /**
+   * Move to the next arrangement on its own. Held while the pointer is over it, stopped for good once a visitor picks one, and never started for anyone who has asked for reduced motion.
+   */
+  autoplay?: boolean | null;
+  /**
+   * Seconds each arrangement holds before the next slides in.
+   */
+  dwell?: number | null;
+  /**
+   * One per dot, in this order. Drag to reorder; the dots follow. Fewer than two and the dots stop being drawn.
+   */
+  themes?:
+    | {
+        /**
+         * Read out by the dot. One word is plenty.
+         */
+        label: string;
+        /**
+         * The printed card everything else sits on. Portrait, 4:5.
+         */
+        card: number | Media;
+        /**
+         * What the card shows, for anyone who cannot see it. The cut-outs are decoration and carry none.
+         */
+        alt?: string | null;
+        /**
+         * Laid over the card in this order — the last one is on top. Positions are percentages of the card, so a negative value hangs a piece off the edge, which is most of what makes it look stuck on rather than printed.
+         */
+        pieces?:
+          | {
+              image: number | Media;
+              /**
+               * Left edge, % of card
+               */
+              x: number;
+              /**
+               * Top edge, % of card
+               */
+              y: number;
+              /**
+               * Width, % of card
+               */
+              width: number;
+              /**
+               * Degrees
+               */
+              rotate: number;
+              /**
+               * Tuck this one under the card instead of over it.
+               */
+              behind?: boolean | null;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * The four corners of the ground gradient, from the top-left of the viewport to the bottom-right. Keep them near-white: this is meant to read as a change of light, not a change of site.
+         */
+        wash: {
+          sky: string;
+          haze: string;
+          landFade: string;
+          land: string;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "home_select".
  */
@@ -2236,6 +2315,44 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   blogEnabled?: T;
   cursorEnabled?: T;
   webglGallery?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "collage_select".
+ */
+export interface CollageSelect<T extends boolean = true> {
+  autoplay?: T;
+  dwell?: T;
+  themes?:
+    | T
+    | {
+        label?: T;
+        card?: T;
+        alt?: T;
+        pieces?:
+          | T
+          | {
+              image?: T;
+              x?: T;
+              y?: T;
+              width?: T;
+              rotate?: T;
+              behind?: T;
+              id?: T;
+            };
+        wash?:
+          | T
+          | {
+              sky?: T;
+              haze?: T;
+              landFade?: T;
+              land?: T;
+            };
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

@@ -33,6 +33,7 @@ import { life } from "../content/life";
 import { gallery } from "../content/gallery";
 import { builtTools, usedTools } from "../content/tools";
 import { resume } from "../content/resume";
+import { collageThemes } from "../content/collage";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(dirname, "..", "public");
@@ -233,6 +234,60 @@ const run = async () => {
       _status: "published",
     },
   });
+
+  /* ---- home artwork ------------------------------------------------------ */
+  // Every cut-out is uploaded, not only the twelve the four starting
+  // arrangements use: the admin is meant to be able to reach for one that is
+  // not on the page yet, and it can only reach for what is in the library.
+  const collageDir = path.join(publicDir, "placeholder", "collage");
+  const collageIds = new Map<string, number>();
+
+  if (fs.existsSync(collageDir)) {
+    for (const file of fs.readdirSync(collageDir).sort()) {
+      if (!file.endsWith(".webp")) continue;
+      const name = file.replace(/\.webp$/, "");
+      const id = await upload(
+        `/placeholder/collage/${file}`,
+        `Collage piece: ${name.replace(/-/g, " ")}`,
+      );
+      if (id !== undefined) collageIds.set(name, id);
+    }
+    console.log(`Uploaded ${collageIds.size} collage pieces.`);
+  } else {
+    console.warn("  no collage artwork found — run `npm run collage` first");
+  }
+
+  const collagePiece = (name: string) => {
+    const id = collageIds.get(name);
+    if (id === undefined) throw new Error(`Collage art is missing: ${name}`);
+    return id;
+  };
+
+  if (collageIds.size) {
+    await payload.updateGlobal({
+      slug: "collage",
+      overrideAccess: true,
+      data: {
+        autoplay: true,
+        dwell: 7,
+        themes: collageThemes.map((theme) => ({
+          label: theme.label,
+          alt: theme.alt,
+          card: collagePiece(theme.card),
+          pieces: theme.pieces.map((piece) => ({
+            image: collagePiece(piece.image),
+            x: piece.x,
+            y: piece.y,
+            width: piece.width,
+            rotate: piece.rotate,
+            behind: piece.behind ?? false,
+          })),
+          wash: theme.wash,
+        })),
+      },
+    });
+    console.log(`Seeded ${collageThemes.length} home arrangements.`);
+  }
 
   await payload.updateGlobal({
     slug: "resume",
