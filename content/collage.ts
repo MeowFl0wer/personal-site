@@ -1,13 +1,17 @@
 /**
- * The four arrangements the home page starts out wearing.
+ * The arrangements the home page starts out wearing.
  *
- * Seed data, not runtime data: once this is in the database it is edited in
- * the admin, and re-seeding overwrites whatever was arranged there. Positions
- * are percentages of the card's own box — negative values hang a piece off the
- * edge, which is most of what makes it look stuck on rather than printed.
+ * GENERATED — written by `npm run collage:save` from whatever is currently in
+ * the database. Arrange the pieces in /admin, run that, and commit: this file
+ * is what a fresh checkout, the server and the static preview all seed from.
  *
- * Every cut-out in public/placeholder/collage is uploaded whether or not an
- * arrangement below uses it, so the admin has the whole set to reach for.
+ * Editing it by hand works and is sometimes the quickest thing to do, but the
+ * next save overwrites it, so do not leave anything here that is not also in
+ * the admin.
+ *
+ * Positions are percentages of the card's own box. Negative values hang a
+ * piece off the edge, which is most of what makes it look stuck on rather than
+ * printed.
  */
 export type CollagePieceSeed = {
   image: string;

@@ -10,6 +10,7 @@
     "placeholders": "node scripts/generate-placeholders.mjs",
     "photos": "node scripts/import-photos.mjs",
     "collage": "node scripts/import-collage.mjs",
+    "collage:save": "tsx scripts/export-collage.ts",
     "generate:types": "payload generate:types",
     "generate:importmap": "payload generate:importmap",
     "payload": "payload",
