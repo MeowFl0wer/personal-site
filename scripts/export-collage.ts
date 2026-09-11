@@ -23,7 +23,9 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { getPayload } from "payload";
 import config from "../src/payload.config";
+import sharp from "sharp";
 import type { Media } from "../src/payload-types";
+import { NAMES, isCard } from "./collage-names.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
@@ -34,8 +36,30 @@ const UPLOADS = path.join(root, "media");
 const asMedia = (value: unknown): Media | null =>
   value && typeof value === "object" && "filename" in value ? (value as Media) : null;
 
-/** The seed refers to art by bare name; uploads carry an extension. */
-const nameOf = (doc: Media) => (doc.filename ?? "").replace(/\.[a-z0-9]+$/i, "");
+const bare = (filename: string) => filename.replace(/\.[a-z0-9]+$/i, "");
+
+/**
+ * What the seed should call this picture.
+ *
+ * Choosing a piece in the admin normally means picking one the seed already
+ * uploaded, and its name is already the right one. Uploading the original a
+ * second time — which is the easier thing to do in that interface — brings the
+ * generator's filename with it, and the same image would then be written into
+ * the repository twice under two names, the second copy at full resolution
+ * because it never went through the importer. The table catches that case and
+ * points the seed back at the piece it already has.
+ */
+const nameOf = (doc: Media) => {
+  const name = bare(doc.filename ?? "");
+  const known = (NAMES as Record<string, string>)[`${name}.png`];
+  return known ?? name;
+};
+
+/* Same ceilings as the importer, for the same reasons: a card is drawn at most
+   336 px and a cut-out at about two thirds of that, both capped by width
+   because width is what the page sets. */
+const CARD_WIDTH = 1200;
+const PIECE_WIDTH = 1100;
 
 const main = async () => {
   const payload = await getPayload({ config });
@@ -48,6 +72,7 @@ const main = async () => {
   }
 
   fs.mkdirSync(SEED_ART, { recursive: true });
+  const pending: { source: string; target: string; name: string }[] = [];
   const copied: string[] = [];
 
   /* Anything chosen in the admin that was uploaded there rather than seeded
@@ -57,15 +82,21 @@ const main = async () => {
   const ensureArt = (docMedia: Media) => {
     const filename = docMedia.filename;
     if (!filename) return;
-    const target = path.join(SEED_ART, filename);
+    /* Under the name the seed will use, not the name it was uploaded with —
+       otherwise a re-upload of a piece the seed already has lands beside it as
+       a second copy that nothing references. */
+    const target = path.join(SEED_ART, `${nameOf(docMedia)}.webp`);
     if (fs.existsSync(target)) return;
     const source = path.join(UPLOADS, filename);
     if (!fs.existsSync(source)) {
       console.warn(`  cannot find the file for ${filename} — seeding will fail on it`);
       return;
     }
-    fs.copyFileSync(source, target);
-    copied.push(filename);
+    /* Queued rather than copied: an upload has not been through the importer,
+       so it is whatever came off the generator — often three times the size it
+       is ever drawn at. It gets the same treatment here that it would have got
+       there, so the repository only ever holds art at a size the page uses. */
+    pending.push({ source, target, name: bare(filename) });
   };
 
   const out: string[] = [];
@@ -141,11 +172,25 @@ ${out.join("\n")}
 ];
 `;
 
+  for (const { source, target, name } of pending) {
+    const pipeline = sharp(source);
+    if (isCard(name)) {
+      await pipeline.resize(CARD_WIDTH, null, { withoutEnlargement: true }).webp({ quality: 86 }).toFile(target);
+    } else {
+      await pipeline
+        .trim({ threshold: 10 })
+        .resize(PIECE_WIDTH, null, { withoutEnlargement: true })
+        .webp({ quality: 92, alphaQuality: 92 })
+        .toFile(target);
+    }
+    copied.push(path.basename(target));
+  }
+
   fs.writeFileSync(SEED_FILE, contents);
 
   console.log(`Wrote ${out.length} arrangements to content/collage.ts`);
   if (copied.length) {
-    console.log(`Copied ${copied.length} newly uploaded piece(s) into public/placeholder/collage:`);
+    console.log(`Brought ${copied.length} newly uploaded piece(s) into public/placeholder/collage:`);
     for (const name of copied) console.log(`  ${name}`);
   }
   console.log("\nCommit content/collage.ts (and any copied art) to make it permanent.");

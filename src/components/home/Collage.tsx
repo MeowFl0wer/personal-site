@@ -77,7 +77,10 @@ export function Collage({ data }: { data: CollageView }) {
       onFocusCapture={() => setHeld(true)}
       onBlurCapture={() => setHeld(false)}
     >
-      <div className="flex flex-col items-center gap-[clamp(1.5rem,4vh,2.75rem)]">
+      {/* The cut-outs hang well below the card — that overhang is what makes
+          them look stuck on rather than printed — so the switch has to clear
+          the lowest of them, not the card's edge. */}
+      <div className="flex flex-col items-center gap-[clamp(5rem,9vh,7rem)]">
         <div className="relative w-[clamp(15rem,22vw,21rem)]" style={{ aspectRatio: "4 / 5" }}>
           {themes.map((theme, index) => {
             /* Signed distance, wrapped, so the arrangement after the current
@@ -166,46 +169,84 @@ function ThemeSwitch({
   const step = (delta: number) => onChange((active + delta + themes.length) % themes.length);
 
   return (
-    <div
-      role="radiogroup"
-      aria-label="Home artwork"
-      className="pointer-events-auto flex items-center gap-3"
-      onKeyDown={(event) => {
-        if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-          event.preventDefault();
-          step(1);
-        } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-          event.preventDefault();
-          step(-1);
-        }
-      }}
-    >
-      {themes.map((theme, index) => {
-        const current = index === active;
-        return (
-          <button
-            key={theme.id}
-            type="button"
-            role="radio"
-            aria-checked={current}
-            aria-label={theme.label}
-            title={theme.label}
-            // Only the chosen dot is a tab stop; arrows move within the group.
-            tabIndex={current ? 0 : -1}
-            onClick={() => onChange(index)}
-            className="group -m-2 cursor-pointer p-2"
-          >
-            <span
-              className={cn(
-                "block size-2 rounded-full border transition-[background-color,border-color,transform] duration-[--duration-fast] ease-[--ease-primary]",
-                current
-                  ? "scale-125 border-ink bg-ink"
-                  : "border-rule-strong bg-transparent group-hover:border-ink",
-              )}
-            />
-          </button>
-        );
-      })}
+    <div className="pointer-events-auto flex items-center gap-1">
+      <Arrow direction={-1} onClick={() => step(-1)} />
+
+      <div
+        role="radiogroup"
+        aria-label="Home artwork"
+        className="flex items-center gap-1"
+        onKeyDown={(event) => {
+          if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+            event.preventDefault();
+            step(1);
+          } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+            event.preventDefault();
+            step(-1);
+          }
+        }}
+      >
+        {themes.map((theme, index) => {
+          const current = index === active;
+          return (
+            <button
+              key={theme.id}
+              type="button"
+              role="radio"
+              aria-checked={current}
+              aria-label={theme.label}
+              title={theme.label}
+              // Only the chosen dot is a tab stop; arrows move within the group.
+              tabIndex={current ? 0 : -1}
+              onClick={() => onChange(index)}
+              /* The dot is 8px and the target is 32 — the padding is the
+                 control, the dot is only what you can see of it. */
+              className="group grid size-8 cursor-pointer place-items-center"
+            >
+              <span
+                className={cn(
+                  "block size-2 rounded-full border transition-[background-color,border-color,transform] duration-[--duration-fast] ease-[--ease-primary]",
+                  current
+                    ? "scale-125 border-ink bg-ink group-hover:scale-150"
+                    : "border-rule-strong bg-transparent group-hover:scale-150 group-hover:border-ink",
+                )}
+              />
+            </button>
+          );
+        })}
+      </div>
+
+      <Arrow direction={1} onClick={() => step(1)} />
     </div>
+  );
+}
+
+/**
+ * Previous and next.
+ *
+ * The dots say where you are among four; these say what to do next, and they
+ * are the thing a pointer actually goes for. Hidden from assistive technology
+ * because they do nothing the radio group does not already offer with arrow
+ * keys, and announcing two more ways to reach the same four states is noise.
+ */
+function Arrow({ direction, onClick }: { direction: -1 | 1; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-hidden="true"
+      tabIndex={-1}
+      className="grid size-8 cursor-pointer place-items-center text-muted transition-colors duration-[--duration-fast] hover:text-ink"
+    >
+      <svg viewBox="0 0 16 16" className="size-3.5" fill="none" aria-hidden="true">
+        <path
+          d={direction === -1 ? "M10 3 5 8l5 5" : "M6 3l5 5-5 5"}
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
   );
 }
