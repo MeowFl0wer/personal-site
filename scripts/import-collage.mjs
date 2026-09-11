@@ -67,10 +67,13 @@ const THEMES = {
   },
 };
 
-/* Displayed at roughly a third of these, so they carry a 2x screen and stop.
+/* The card tops out at 21rem and a piece at about two thirds of that, so
+   these carry a 2x screen and stop. They were three times too big on the
+   first pass, which mattered once three arrangements had to be in the
+   document at once for the slide.
    The originals are ~1.5 MB each and every one of them would otherwise ship. */
-const CARD_WIDTH = 900;
-const PIECE_BOX = 700;
+const CARD_WIDTH = 760;
+const PIECE_BOX = 480;
 
 await fs.rm(OUT, { recursive: true, force: true });
 await fs.mkdir(OUT, { recursive: true });

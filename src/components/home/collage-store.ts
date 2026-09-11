@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from "react";
+
 import { COLLAGE_STORAGE_KEY, COLLAGE_THEMES, DEFAULT_COLLAGE } from "./collage-themes";
 
 /**
@@ -47,3 +49,7 @@ export const collageStore = {
     for (const listener of listeners) listener();
   },
 };
+
+/** The hook form, so callers never have to wire the three arguments by hand. */
+export const useCollageTheme = () =>
+  useSyncExternalStore(collageStore.subscribe, collageStore.get, collageStore.getServerSnapshot);
