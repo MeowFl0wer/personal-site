@@ -98,6 +98,73 @@
   --wash-haze: #edf1f2;
   --wash-meadow-fade: #f0f4ea;
   --wash-meadow: #e8efdc;
+}
+
+/* An unregistered custom property is a string as far as the cascade is
+   concerned, so swapping one cuts rather than fades. Registering the four wash
+   stops as colours makes them interpolable, which is the whole reason the
+   ground can follow the artwork without the page blinking. Browsers without
+   @property ignore these and get the cut — the colours are close enough
+   together that it reads as a change of light either way. */
+@property --wash-sky {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e0eaf2;
+}
+@property --wash-haze {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #edf1f2;
+}
+@property --wash-meadow-fade {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #f0f4ea;
+}
+@property --wash-meadow {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e8efdc;
+}
+
+:root {
+  transition:
+    --wash-sky var(--duration-slow) var(--ease-primary),
+    --wash-haze var(--duration-slow) var(--ease-primary),
+    --wash-meadow-fade var(--duration-slow) var(--ease-primary),
+    --wash-meadow var(--duration-slow) var(--ease-primary);
+}
+
+/* The ground follows the artwork. Each block re-points the same four stops the
+   default set above declares, so nothing else in the sheet has to know that
+   more than one arrangement exists — and a theme with no block here simply
+   keeps the default wash rather than rendering colourless.
+
+   `ridge` is the default and deliberately has no block: it *is* the values
+   above, and duplicating them is how the two drift apart.
+
+   Set on <html> by the inline script in the frontend layout before first
+   paint, then kept in step by the collage. Unlayered, like the rest of this
+   section, so it beats anything Tailwind emits inside @layer. */
+:root[data-collage="plateau"] {
+  --wash-sky: #e3eaf0;
+  --wash-haze: #eff1ee;
+  --wash-meadow-fade: #f3f1e6;
+  --wash-meadow: #f0ead9;
+}
+
+:root[data-collage="coast"] {
+  --wash-sky: #dde8f0;
+  --wash-haze: #e9eff2;
+  --wash-meadow-fade: #eef3ee;
+  --wash-meadow: #e6efe9;
+}
+
+:root[data-collage="snow"] {
+  --wash-sky: #e1eaf3;
+  --wash-haze: #eef1f5;
+  --wash-meadow-fade: #f1f3f6;
+  --wash-meadow: #e9edf2;
 
   /* Mirrors of the motion tokens so TS can read one source of truth. */
   --motion-ease-primary: cubic-bezier(0.22, 1, 0.36, 1);

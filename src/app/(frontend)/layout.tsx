@@ -12,6 +12,7 @@ import { Cursor } from "@/components/motion/Cursor";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { PreviewBanner } from "@/components/layout/PreviewBanner";
+import { CollageGround } from "@/components/home/CollageGround";
 import { AccentTheme } from "@/components/layout/AccentTheme";
 
 /** SEO comes from Site Settings, so the title is editable without a deploy. */
@@ -59,9 +60,18 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   ]);
 
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html
+      lang="en"
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+      // CollageGround writes data-collage here before React hydrates, which is
+      // the whole point of it — the ground wash has to be right on the first
+      // paint. React would otherwise report the attribute it did not render.
+      // This suppresses that for <html>'s own attributes and nothing deeper.
+      suppressHydrationWarning
+    >
       <body>
-        <AccentTheme accent={settings.accentColor ?? "clay"} />
+        <CollageGround />
+        <AccentTheme accent={settings.accentColor ?? "harbor"} />
         <MotionProvider cursorEnabled={settings.cursorEnabled !== false}>
           <SmoothScroll>
             <a

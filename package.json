@@ -9,6 +9,7 @@
     "lint": "eslint",
     "placeholders": "node scripts/generate-placeholders.mjs",
     "photos": "node scripts/import-photos.mjs",
+    "collage": "node scripts/import-collage.mjs",
     "generate:types": "payload generate:types",
     "generate:importmap": "payload generate:importmap",
     "payload": "payload",
