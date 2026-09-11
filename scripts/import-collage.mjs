@@ -74,14 +74,21 @@ const NAMES = {
    the pixels keeps the output stable. */
 const isCard = (name) => name.startsWith("card-") || name.startsWith("pair-");
 
-/* The card is drawn at most 21rem — 336 px — and a cut-out at about two
-   thirds of that. Cards carry a 3x screen because they are flat washes of
-   colour that cost almost nothing to store at any size; cut-outs stop at 2x
-   because they are photographs, and three of them are in the document at once
-   for the slide. Both were three times too big on the first pass, then the
-   cards were cut too far with them. */
+/* Both are capped by width, because width is what the page sets: a piece is
+   drawn at a percentage of the card's width and its height follows. Capping
+   the longest side instead — which this did at first — spends the whole budget
+   on the height of a tall cut-out and leaves a standing figure 264 px wide
+   where it needed 333, which is the one place the artwork actually looked
+   soft.
+
+   The card is drawn at most 21rem, 336 px, and the widest cut-out at about
+   two thirds of that. The collage does not render below `lg`, so the screens
+   that see it are laptops and desktops — 2x almost without exception, where
+   480 would already be enough. 720 covers every current piece on a 3x screen
+   as well, for about 900 kB more across all twelve, which is worth it on a
+   page whose subject is photographs. */
 const CARD_WIDTH = 1200;
-const PIECE_BOX = 480;
+const PIECE_WIDTH = 720;
 
 await fs.rm(OUT, { recursive: true, force: true });
 await fs.mkdir(OUT, { recursive: true });
@@ -109,7 +116,7 @@ for (const file of sources) {
            canvas, and without this the transparent margin becomes layout the
            page has to guess at. */
         .trim({ threshold: 10 })
-        .resize(PIECE_BOX, PIECE_BOX, { fit: "inside", withoutEnlargement: true })
+        .resize(PIECE_WIDTH, null, { withoutEnlargement: true })
         .webp({ quality: 88, alphaQuality: 90 })
         .toFile(out);
 
