@@ -102,8 +102,9 @@ export function CollageArranger({ path }: UIFieldClientProps) {
   );
 
   const [dragging, setDragging] = useState<number | null>(null);
+  const [sizing, setSizing] = useState<number | null>(null);
 
-  const onPointerDown = (piece: Piece) => (event: React.PointerEvent) => {
+  const startMove = (piece: Piece) => (event: React.PointerEvent) => {
     const box = surface.current?.getBoundingClientRect();
     if (!box) return;
 
@@ -136,6 +137,66 @@ export function CollageArranger({ path }: UIFieldClientProps) {
     window.addEventListener("pointerup", up);
   };
 
+  /**
+   * Scale about the centre, not the corner.
+   *
+   * The stored position is a top-left corner, so growing a piece without
+   * moving it means writing a new corner every frame. Doing that arithmetic
+   * here is the whole point of the handle: the alternative is watching a
+   * sticker crawl down and to the right as you enlarge it and then dragging it
+   * back, which is what this replaces.
+   *
+   * Scale comes from how far the pointer is from the centre rather than from
+   * how far it has travelled, so the piece follows the cursor instead of
+   * drifting away from it, and the rotation can be ignored — a rotation about
+   * the centre leaves the centre where it was.
+   */
+  const startResize = (piece: Piece) => (event: React.PointerEvent) => {
+    const box = surface.current?.getBoundingClientRect();
+    const element = (event.currentTarget as HTMLElement).closest<HTMLElement>("[data-piece]");
+    const image = element?.querySelector("img");
+    if (!box || !element || !image) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    setSizing(piece.index);
+
+    const start = element.getBoundingClientRect();
+    const centreX = start.left + start.width / 2;
+    const centreY = start.top + start.height / 2;
+    const reach = Math.hypot(event.clientX - centreX, event.clientY - centreY);
+    const ratio = image.naturalHeight / (image.naturalWidth || 1);
+    // A pointer that starts on top of the centre would divide by nothing.
+    if (reach < 4) return;
+
+    const move = (moveEvent: PointerEvent) => {
+      const current = surface.current?.getBoundingClientRect();
+      if (!current) return;
+
+      const distance = Math.hypot(moveEvent.clientX - centreX, moveEvent.clientY - centreY);
+      const width = clamp((piece.width * distance) / reach, 4, 140);
+
+      // Put the corner back where it has to be for the centre not to have moved.
+      const pixelWidth = (width / 100) * current.width;
+      const pixelHeight = pixelWidth * ratio;
+      const x = ((centreX - current.left - pixelWidth / 2) / current.width) * 100;
+      const y = ((centreY - current.top - pixelHeight / 2) / current.height) * 100;
+
+      write(piece.index, "width", round(width));
+      write(piece.index, "x", round(clamp(x, -40, 120)));
+      write(piece.index, "y", round(clamp(y, -40, 120)));
+    };
+
+    const up = () => {
+      setSizing(null);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
   const cardUrl = cardId ? urls[String(cardId)] : undefined;
 
   return (
@@ -144,9 +205,10 @@ export function CollageArranger({ path }: UIFieldClientProps) {
         Arrange
       </div>
       <p style={{ margin: "0 0 .75rem", fontSize: ".8rem", opacity: 0.7, maxWidth: "42rem" }}>
-        Drag a cut-out to move it. The numbers below follow, and typing into them moves the piece —
-        use the list for anything that has to be exact. Scale and rotation stay in the list: they
-        are fiddly to drag and easy to type.
+        Drag a cut-out to move it, or its corner handle to resize it — always in proportion, and
+        about its own centre, so it grows where it stands. The numbers below follow, and typing into
+        them moves the piece: use the list for anything that has to be exact. Rotation stays in the
+        list, being fiddly to drag and easy to type.
       </p>
 
       <div
@@ -180,29 +242,62 @@ export function CollageArranger({ path }: UIFieldClientProps) {
           const id = fields[`${row}.pieces.${piece.index}.image`]?.value;
           const url = id ? urls[String(id)] : undefined;
           if (!url) return null;
+          const active = dragging === piece.index || sizing === piece.index;
           return (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <div
               key={piece.index}
-              src={url}
-              alt=""
-              draggable={false}
-              onPointerDown={onPointerDown(piece)}
-              title={`Cut-out ${piece.index + 1}`}
+              data-piece={piece.index}
               style={{
                 position: "absolute",
                 left: `${piece.x}%`,
                 top: `${piece.y}%`,
                 width: `${piece.width}%`,
-                height: "auto",
                 transform: `rotate(${piece.rotate}deg)`,
-                cursor: dragging === piece.index ? "grabbing" : "grab",
-                filter:
-                  dragging === piece.index
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={url}
+                alt=""
+                draggable={false}
+                onPointerDown={startMove(piece)}
+                title={`Cut-out ${piece.index + 1} — drag to move`}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  height: "auto",
+                  cursor: dragging === piece.index ? "grabbing" : "grab",
+                  filter: active
                     ? "drop-shadow(0 6px 10px rgba(0,0,0,.35))"
                     : "drop-shadow(0 3px 5px rgba(0,0,0,.2))",
-              }}
-            />
+                }}
+              />
+              <button
+                type="button"
+                onPointerDown={startResize(piece)}
+                title={`Cut-out ${piece.index + 1} — drag to resize`}
+                aria-hidden="true"
+                /* Out of the tab order on purpose: a pointer-only control with
+                   no keyboard behaviour should not be a stop, and the Width
+                   field below does the same job for anyone typing. */
+                tabIndex={-1}
+                style={{
+                  position: "absolute",
+                  right: "-7px",
+                  bottom: "-7px",
+                  width: "14px",
+                  height: "14px",
+                  padding: 0,
+                  borderRadius: "50%",
+                  border: "1.5px solid var(--theme-elevation-0, #fff)",
+                  background: "var(--theme-elevation-800, #333)",
+                  boxShadow: "0 1px 3px rgba(0,0,0,.4)",
+                  opacity: active ? 1 : 0.55,
+                  cursor: "nwse-resize",
+                  touchAction: "none",
+                }}
+              />
+            </div>
           );
         })}
       </div>
