@@ -167,6 +167,13 @@ export type CollageThemeSeed = {
   wash: { sky: string; haze: string; landFade: string; land: string };
 };
 
+/** How the arrangements take their turn. Editable in the admin like the rest. */
+export const collageSettings = {
+  autoplay: ${doc.autoplay !== false},
+  /** Seconds each arrangement holds before the next slides in. */
+  dwell: ${doc.dwell ?? 7},
+};
+
 export const collageThemes: CollageThemeSeed[] = [
 ${out.join("\n")}
 ];
@@ -189,6 +196,7 @@ ${out.join("\n")}
   fs.writeFileSync(SEED_FILE, contents);
 
   console.log(`Wrote ${out.length} arrangements to content/collage.ts`);
+  console.log(`Playback: autoplay ${doc.autoplay !== false ? "on" : "off"}, ${doc.dwell ?? 7}s each`);
   if (copied.length) {
     console.log(`Brought ${copied.length} newly uploaded piece(s) into public/placeholder/collage:`);
     for (const name of copied) console.log(`  ${name}`);

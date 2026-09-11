@@ -33,7 +33,7 @@ import { life } from "../content/life";
 import { gallery } from "../content/gallery";
 import { builtTools, usedTools } from "../content/tools";
 import { resume } from "../content/resume";
-import { collageThemes } from "../content/collage";
+import { collageSettings, collageThemes } from "../content/collage";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(dirname, "..", "public");
@@ -302,8 +302,8 @@ const run = async () => {
       slug: "collage",
       overrideAccess: true,
       data: {
-        autoplay: true,
-        dwell: 7,
+        autoplay: collageSettings.autoplay,
+        dwell: collageSettings.dwell,
         themes: collageThemes.map((theme) => ({
           label: theme.label,
           alt: theme.alt,
