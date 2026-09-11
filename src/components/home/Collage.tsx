@@ -67,7 +67,11 @@ export function Collage({ data }: { data: CollageView }) {
   return (
     <div
       data-collage-root
-      className="pointer-events-none absolute inset-y-0 right-0 hidden w-[44%] items-center justify-center lg:flex"
+      /* Held off the right edge by more than the gutter. The gutter is the
+         page's margin and the collage is not page content — it is pinned into
+         the space the headline leaves, and sitting it flush against the same
+         line as the text below reads as a column it is not part of. */
+      className="pointer-events-none absolute inset-y-0 right-[2.25rem] hidden w-[44%] items-center justify-center lg:flex"
       onMouseEnter={() => setHeld(true)}
       onMouseLeave={() => setHeld(false)}
       onFocusCapture={() => setHeld(true)}

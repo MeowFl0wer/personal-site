@@ -127,9 +127,43 @@ const run = async () => {
   }
 
   /* ---- clear ----------------------------------------------------------- */
+  /* The home artwork holds the only references to media that outlive a clear:
+     collections are emptied here, globals are not, and a foreign key from the
+     collage to an upload pins that upload in place. Those survivors are
+     invisible until the next run's uploads find their own names taken and
+     quietly become `card-yaks-1.webp`, which is how the seed loses track of
+     its own artwork. Let go of them first. */
+  await payload.updateGlobal({ slug: "collage", overrideAccess: true, data: { themes: [] } });
+
+  /* Once is not enough either: a bulk delete only clears a page at a time, so
+     a library of several hundred uploads survives it in part. */
   for (const collection of ["projects", "life", "gallery", "built-tools", "used-tools", "posts", "media"] as const) {
-    await payload.delete({ collection, where: { id: { exists: true } }, overrideAccess: true });
+    for (let pass = 0; pass < 50; pass += 1) {
+      const { totalDocs } = await payload.count({ collection, overrideAccess: true });
+      if (totalDocs === 0) break;
+      await payload.delete({ collection, where: { id: { exists: true } }, overrideAccess: true });
+      if (pass === 49) throw new Error(`Could not clear ${collection} — ${totalDocs} left`);
+    }
   }
+
+  /* And the files behind them. Deleting the rows does not reliably clear the
+     directory in time, and an upload that finds its own name taken quietly
+     becomes `card-yaks-1.webp` — which then drifts to `-2` on the next run.
+     Those names are the seed's references to its own artwork, so letting them
+     drift means `npm run collage:save` writes a reference nobody can resolve
+     and copies a duplicate into the seed folder to make it resolvable again.
+     Every row is being deleted, so every file here is about to be an orphan. */
+  const uploadDir = path.resolve(dirname, "..", "media");
+  if (fs.existsSync(uploadDir)) {
+    let removed = 0;
+    for (const entry of fs.readdirSync(uploadDir)) {
+      if (entry.startsWith(".")) continue;
+      fs.rmSync(path.join(uploadDir, entry), { recursive: true, force: true });
+      removed += 1;
+    }
+    if (removed) console.log(`Cleared ${removed} orphaned upload(s).`);
+  }
+
   console.log("Cleared content collections.");
 
   /* ---- media ----------------------------------------------------------- */

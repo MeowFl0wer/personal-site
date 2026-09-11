@@ -74,12 +74,13 @@ const NAMES = {
    the pixels keeps the output stable. */
 const isCard = (name) => name.startsWith("card-") || name.startsWith("pair-");
 
-/* The card tops out at 21rem and a piece at about two thirds of that, so
-   these carry a 2x screen and stop. They were three times too big on the
-   first pass, which mattered once three arrangements had to be in the
-   document at once for the slide.
-   The originals are ~1.5 MB each and every one of them would otherwise ship. */
-const CARD_WIDTH = 760;
+/* The card is drawn at most 21rem — 336 px — and a cut-out at about two
+   thirds of that. Cards carry a 3x screen because they are flat washes of
+   colour that cost almost nothing to store at any size; cut-outs stop at 2x
+   because they are photographs, and three of them are in the document at once
+   for the slide. Both were three times too big on the first pass, then the
+   cards were cut too far with them. */
+const CARD_WIDTH = 1200;
 const PIECE_BOX = 480;
 
 await fs.rm(OUT, { recursive: true, force: true });
