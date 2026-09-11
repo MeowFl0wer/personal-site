@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "placeholders": "node scripts/generate-placeholders.mjs",
+    "photos": "node scripts/import-photos.mjs",
     "generate:types": "payload generate:types",
     "generate:importmap": "payload generate:importmap",
     "payload": "payload",
