@@ -4,7 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "../globals.css";
 
-import { getSettings, getNavigation, getSocials, getHome, toMedia } from "@/lib/cms";
+import { getSettings, getNavigation, getSocials, getHome, getCollage, toMedia } from "@/lib/cms";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { PageTransition } from "@/components/motion/PageTransition";
@@ -12,6 +12,7 @@ import { Cursor } from "@/components/motion/Cursor";
 import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { PreviewBanner } from "@/components/layout/PreviewBanner";
+import { CollageGround } from "@/components/home/CollageGround";
 import { AccentTheme } from "@/components/layout/AccentTheme";
 
 /** SEO comes from Site Settings, so the title is editable without a deploy. */
@@ -35,7 +36,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const viewport: Viewport = { themeColor: "#f1f0eb" };
+// The sky end of the ground wash — what sits behind the browser chrome at the
+// top of a page. Mirrors --wash-sky in globals.css.
+export const viewport: Viewport = { themeColor: "#e0eaf2" };
 
 /**
  * The public site's shell. Completely separate from the admin's shell in
@@ -48,18 +51,28 @@ export const viewport: Viewport = { themeColor: "#f1f0eb" };
  *   PageTransition → needs Lenis to reset scroll on route change
  */
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
-  const [settings, navigation, socials, home, { isEnabled: preview }] = await Promise.all([
+  const [settings, navigation, socials, home, collage, { isEnabled: preview }] = await Promise.all([
     getSettings(),
     getNavigation(),
     getSocials(),
     getHome(),
+    getCollage(),
     draftMode(),
   ]);
 
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html
+      lang="en"
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+      // CollageGround writes data-collage here before React hydrates, which is
+      // the whole point of it — the ground wash has to be right on the first
+      // paint. React would otherwise report the attribute it did not render.
+      // This suppresses that for <html>'s own attributes and nothing deeper.
+      suppressHydrationWarning
+    >
       <body>
-        <AccentTheme accent={settings.accentColor ?? "clay"} />
+        <CollageGround themes={collage.themes} />
+        <AccentTheme accent={settings.accentColor ?? "harbor"} />
         <MotionProvider cursorEnabled={settings.cursorEnabled !== false}>
           <SmoothScroll>
             <a

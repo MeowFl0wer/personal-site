@@ -1,6 +1,6 @@
 {
   "name": "personal-site",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "placeholders": "node scripts/generate-placeholders.mjs",
+    "photos": "node scripts/import-photos.mjs",
+    "collage": "node scripts/import-collage.mjs",
+    "collage:save": "tsx scripts/export-collage.ts",
     "generate:types": "payload generate:types",
     "generate:importmap": "payload generate:importmap",
     "payload": "payload",

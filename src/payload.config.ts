@@ -16,6 +16,7 @@ import { Posts } from "./payload/collections/Posts";
 import { Home } from "./payload/globals/Home";
 import { Resume } from "./payload/globals/Resume";
 import { SiteSettings } from "./payload/globals/SiteSettings";
+import { Collage } from "./payload/globals/Collage";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -52,7 +53,7 @@ export default buildConfig({
   },
 
   collections: [Users, Media, Projects, Life, Gallery, BuiltTools, UsedTools, Posts],
-  globals: [Home, Resume, SiteSettings],
+  globals: [Home, Resume, SiteSettings, Collage],
 
   editor: lexicalEditor({}),
 

@@ -5,8 +5,10 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ProximityField, ProximityItem, SplitChars } from "@/components/motion/ProximityField";
 import { useMotion } from "@/components/motion/MotionProvider";
+import { Collage } from "@/components/home/Collage";
 import { duration, ease, stagger } from "@/lib/motion";
 import type { Home } from "@/payload-types";
+import type { CollageView } from "@/components/home/collage-types";
 
 gsap.registerPlugin(useGSAP);
 
@@ -22,7 +24,7 @@ gsap.registerPlugin(useGSAP);
  *
  * Every string comes from the CMS.
  */
-export function Hero({ home }: { home: Home }) {
+export function Hero({ home, collage }: { home: Home; collage: CollageView }) {
   const scope = useRef<HTMLElement>(null);
   const { motion, ready } = useMotion();
 
@@ -50,8 +52,10 @@ export function Hero({ home }: { home: Home }) {
   return (
     <section
       ref={scope}
-      className="shell flex min-h-[calc(100svh-5rem)] flex-col justify-between pt-8 pb-12 md:pt-12"
+      className="shell relative flex min-h-[calc(100svh-5rem)] flex-col justify-between pt-8 pb-12 md:pt-12"
     >
+      <Collage data={collage} />
+
       {/* NAME ————————————————————————————————— YEAR */}
       <div data-hero-meta className="flex items-baseline justify-between">
         <p className="meta">{home.name}</p>

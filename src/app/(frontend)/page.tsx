@@ -1,4 +1,4 @@
-import { getHome, getHomeSections, getSettings } from "@/lib/cms";
+import { getCollage, getHome, getHomeSections, getSettings } from "@/lib/cms";
 import { Hero } from "@/components/home/Hero";
 import { AboutIntro } from "@/components/home/AboutIntro";
 import { SelectedWork } from "@/components/home/SelectedWork";
@@ -18,7 +18,12 @@ import { pad } from "@/lib/utils";
  * removed entirely it is put back at the top.
  */
 export default async function HomePage() {
-  const [home, sections, settings] = await Promise.all([getHome(), getHomeSections(), getSettings()]);
+  const [home, sections, settings, collage] = await Promise.all([
+    getHome(),
+    getHomeSections(),
+    getSettings(),
+    getCollage(),
+  ]);
 
   const ordered = sections.some((section) => section.block === "hero")
     ? sections
@@ -36,7 +41,7 @@ export default async function HomePage() {
 
         switch (section.block) {
           case "hero":
-            return <Hero key={key} home={home} />;
+            return <Hero key={key} home={home} collage={collage} />;
 
           case "about":
             return <AboutIntro key={key} home={home} index={index!} label={section.label ?? "About"} />;

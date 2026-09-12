@@ -39,13 +39,14 @@ export const SiteSettings: GlobalConfig = {
             {
               name: "accentColor",
               type: "select",
-              defaultValue: "clay",
+              defaultValue: "harbor",
               admin: {
                 description:
-                  "The single accent tone. Chosen from the palette rather than picked freely, so it always sits correctly against the warm white.",
+                  "The single accent tone. Chosen from the palette rather than picked freely, so it always sits correctly against the ground wash.",
               },
               options: [
-                { value: "clay", label: "Clay (default)" },
+                { value: "harbor", label: "Harbour (default)" },
+                { value: "clay", label: "Clay" },
                 { value: "ink", label: "Ink" },
                 { value: "moss", label: "Moss" },
                 { value: "slate", label: "Slate" },

@@ -33,6 +33,7 @@ import { life } from "../content/life";
 import { gallery } from "../content/gallery";
 import { builtTools, usedTools } from "../content/tools";
 import { resume } from "../content/resume";
+import { collageSettings, collageThemes } from "../content/collage";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(dirname, "..", "public");
@@ -126,9 +127,43 @@ const run = async () => {
   }
 
   /* ---- clear ----------------------------------------------------------- */
+  /* The home artwork holds the only references to media that outlive a clear:
+     collections are emptied here, globals are not, and a foreign key from the
+     collage to an upload pins that upload in place. Those survivors are
+     invisible until the next run's uploads find their own names taken and
+     quietly become `card-yaks-1.webp`, which is how the seed loses track of
+     its own artwork. Let go of them first. */
+  await payload.updateGlobal({ slug: "collage", overrideAccess: true, data: { themes: [] } });
+
+  /* Once is not enough either: a bulk delete only clears a page at a time, so
+     a library of several hundred uploads survives it in part. */
   for (const collection of ["projects", "life", "gallery", "built-tools", "used-tools", "posts", "media"] as const) {
-    await payload.delete({ collection, where: { id: { exists: true } }, overrideAccess: true });
+    for (let pass = 0; pass < 50; pass += 1) {
+      const { totalDocs } = await payload.count({ collection, overrideAccess: true });
+      if (totalDocs === 0) break;
+      await payload.delete({ collection, where: { id: { exists: true } }, overrideAccess: true });
+      if (pass === 49) throw new Error(`Could not clear ${collection} — ${totalDocs} left`);
+    }
   }
+
+  /* And the files behind them. Deleting the rows does not reliably clear the
+     directory in time, and an upload that finds its own name taken quietly
+     becomes `card-yaks-1.webp` — which then drifts to `-2` on the next run.
+     Those names are the seed's references to its own artwork, so letting them
+     drift means `npm run collage:save` writes a reference nobody can resolve
+     and copies a duplicate into the seed folder to make it resolvable again.
+     Every row is being deleted, so every file here is about to be an orphan. */
+  const uploadDir = path.resolve(dirname, "..", "media");
+  if (fs.existsSync(uploadDir)) {
+    let removed = 0;
+    for (const entry of fs.readdirSync(uploadDir)) {
+      if (entry.startsWith(".")) continue;
+      fs.rmSync(path.join(uploadDir, entry), { recursive: true, force: true });
+      removed += 1;
+    }
+    if (removed) console.log(`Cleared ${removed} orphaned upload(s).`);
+  }
+
   console.log("Cleared content collections.");
 
   /* ---- media ----------------------------------------------------------- */
@@ -177,7 +212,7 @@ const run = async () => {
       siteName: profile.shortName,
       siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
       email: profile.email,
-      accentColor: "clay",
+      accentColor: "harbor",
       seoTitle: profile.seo.title,
       seoDescription: profile.seo.description,
       blogEnabled: false,
@@ -233,6 +268,60 @@ const run = async () => {
       _status: "published",
     },
   });
+
+  /* ---- home artwork ------------------------------------------------------ */
+  // Every cut-out is uploaded, not only the twelve the four starting
+  // arrangements use: the admin is meant to be able to reach for one that is
+  // not on the page yet, and it can only reach for what is in the library.
+  const collageDir = path.join(publicDir, "placeholder", "collage");
+  const collageIds = new Map<string, number>();
+
+  if (fs.existsSync(collageDir)) {
+    for (const file of fs.readdirSync(collageDir).sort()) {
+      if (!file.endsWith(".webp")) continue;
+      const name = file.replace(/\.webp$/, "");
+      const id = await upload(
+        `/placeholder/collage/${file}`,
+        `Collage piece: ${name.replace(/-/g, " ")}`,
+      );
+      if (id !== undefined) collageIds.set(name, id);
+    }
+    console.log(`Uploaded ${collageIds.size} collage pieces.`);
+  } else {
+    console.warn("  no collage artwork found — run `npm run collage` first");
+  }
+
+  const collagePiece = (name: string) => {
+    const id = collageIds.get(name);
+    if (id === undefined) throw new Error(`Collage art is missing: ${name}`);
+    return id;
+  };
+
+  if (collageIds.size) {
+    await payload.updateGlobal({
+      slug: "collage",
+      overrideAccess: true,
+      data: {
+        autoplay: collageSettings.autoplay,
+        dwell: collageSettings.dwell,
+        themes: collageThemes.map((theme) => ({
+          label: theme.label,
+          alt: theme.alt,
+          card: collagePiece(theme.card),
+          pieces: theme.pieces.map((piece) => ({
+            image: collagePiece(piece.image),
+            x: piece.x,
+            y: piece.y,
+            width: piece.width,
+            rotate: piece.rotate,
+            behind: piece.behind ?? false,
+          })),
+          wash: theme.wash,
+        })),
+      },
+    });
+    console.log(`Seeded ${collageThemes.length} home arrangements.`);
+  }
 
   await payload.updateGlobal({
     slug: "resume",
