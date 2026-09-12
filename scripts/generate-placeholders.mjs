@@ -11,6 +11,7 @@
  * Uses sharp, which ships with Next.js, so there is no extra dependency.
  */
 import fs from "node:fs/promises";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 import { jobs } from "./photo-manifest.mjs";
@@ -101,9 +102,17 @@ const grain = (width, height) =>
     .png()
     .toBuffer();
 
+/* Fills gaps; never paints over a real photograph. Every one of these is a
+   stand-in for a picture that has not arrived yet, so the moment one has, the
+   generator's job on that slot is done — and CI runs this before every build
+   of the preview, where overwriting would mean publishing invented grey
+   landscapes in place of the photography the site is about. Delete a file to
+   have it generated again. */
 const write = async (file, width, height) => {
   const target = path.join(OUT, file);
   await fs.mkdir(path.dirname(target), { recursive: true });
+
+  if (existsSync(target)) return null;
 
   const base = sharp(svg(file, width, height));
   const noise = await grain(width, height);
@@ -122,8 +131,13 @@ const write = async (file, width, height) => {
 
 const run = async () => {
   await fs.mkdir(OUT, { recursive: true });
-  const written = await Promise.all(jobs.map(([file, w, h]) => write(file, w, h)));
-  console.log(`Wrote ${written.length} placeholder images to public/placeholder`);
+  const results = await Promise.all(jobs.map(([file, w, h]) => write(file, w, h)));
+  const written = results.filter(Boolean);
+  const kept = results.length - written.length;
+  console.log(
+    `Wrote ${written.length} placeholder image(s) to public/placeholder` +
+      (kept ? `; left ${kept} existing file(s) alone` : ""),
+  );
 };
 
 run().catch((error) => {
