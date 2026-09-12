@@ -13,6 +13,7 @@ import { Life } from "./payload/collections/Life";
 import { Gallery } from "./payload/collections/Gallery";
 import { BuiltTools, UsedTools } from "./payload/collections/Tools";
 import { Posts } from "./payload/collections/Posts";
+import { AccessGrants } from "./payload/collections/AccessGrants";
 import { Home } from "./payload/globals/Home";
 import { Resume } from "./payload/globals/Resume";
 import { SiteSettings } from "./payload/globals/SiteSettings";
@@ -52,7 +53,7 @@ export default buildConfig({
     },
   },
 
-  collections: [Users, Media, Projects, Life, Gallery, BuiltTools, UsedTools, Posts],
+  collections: [Users, Media, Projects, Life, Gallery, BuiltTools, UsedTools, Posts, AccessGrants],
   globals: [Home, Resume, SiteSettings, Collage],
 
   editor: lexicalEditor({}),

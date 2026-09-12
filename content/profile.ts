@@ -35,12 +35,12 @@ export const profile: Profile = {
 export const socials: Social[] = [
   { platform: "github", label: "GitHub", href: "https://github.com/your-handle", handle: "@your-handle", external: true },
   { platform: "instagram", label: "Instagram", href: "https://instagram.com/your-handle", handle: "@your-handle", external: true },
-  { platform: "x", label: "X", href: "https://x.com/your-handle", handle: "@your-handle", external: true },
+  { platform: "x", label: "X", href: "https://x.com/your-handle", handle: "@your-handle", external: true, private: true },
   { platform: "bilibili", label: "Bilibili", href: "https://space.bilibili.com/your-id", handle: "your-id", external: true },
   { platform: "douyin", label: "Douyin", href: "https://www.douyin.com/user/your-id", handle: "@your-handle", external: true },
   { platform: "xiaohongshu", label: "Xiaohongshu", href: "https://xiaohongshu.com/user/profile/your-id", handle: "@your-handle", external: true },
   // WeChat has no public profile page. u.wechat.com links are what the app
   // itself generates; the alternative is pointing this at an uploaded QR image.
-  { platform: "wechat", label: "WeChat", href: "https://u.wechat.com/your-id", handle: "your-wechat-id", external: true },
+  { platform: "wechat", label: "WeChat", href: "https://u.wechat.com/your-id", handle: "your-wechat-id", external: true, private: true },
   { platform: "email", label: "Email", href: `mailto:${profile.email}`, handle: profile.email, external: true },
 ];

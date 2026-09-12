@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { draftMode } from "next/headers";
+import { isUnlocked } from "@/lib/access";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import type {
@@ -120,13 +121,26 @@ export const getNavigation = cache(async (): Promise<NavItem[]> => {
 
 export const getSocials = cache(async (): Promise<Social[]> => {
   const settings = await getSettings();
-  return (settings.socials ?? []).map((social) => ({
-    label: social.label,
-    href: social.href,
-    handle: social.handle ?? undefined,
-    platform: social.platform ?? "website",
-    external: !social.href.startsWith("/"),
-  }));
+  const unlocked = await isUnlocked();
+
+  /* A private link is dropped, not disabled: the handle and the URL are both
+     the thing being protected, and a disabled anchor still carries its href. */
+  return (settings.socials ?? [])
+    .filter((social) => unlocked || social.private !== true)
+    .map((social) => ({
+      label: social.label,
+      href: social.href,
+      handle: social.handle ?? undefined,
+      platform: social.platform ?? "website",
+      external: !social.href.startsWith("/"),
+    }));
+});
+
+/** How many links a visitor without a grant is not being shown. */
+export const getPrivateSocialCount = cache(async (): Promise<number> => {
+  if (await isUnlocked()) return 0;
+  const settings = await getSettings();
+  return (settings.socials ?? []).filter((social) => social.private === true).length;
 });
 
 /* -------------------------------------------------------------------- home */
@@ -198,9 +212,73 @@ export const getCollage = cache(async (): Promise<CollageView> => {
 /* ---------------------------------------------------------- about / resume */
 
 /** Depth 1 so the portrait arrives as a Media document rather than its id. */
-export const getResume = cache(async (): Promise<ResumeDoc> => {
+/**
+ * What the private half of /about looks like when it is not yours to read.
+ *
+ * A count and a rough length, and nothing else. The page draws covered blocks
+ * from these, so it reads as a page with something on it rather than a page
+ * with a hole — which is the whole point of covering rather than removing. The
+ * lengths are rounded hard so the shape is honest without being a transcript:
+ * "three jobs, two lines each", not "eleven characters".
+ */
+export type Covered = { rows: number; lines: number };
+
+export type ResumeView = ResumeDoc & {
+  /** False when the caller may not read the private fields. */
+  unlocked: boolean;
+  /** Present only while locked; the shape of what is being withheld. */
+  covered?: {
+    legalName: Covered;
+    experience: Covered;
+    education: Covered;
+    projects: Covered;
+  };
+};
+
+/** Rounds to the nearest few so a block hints at length without spelling it. */
+const roughly = (value: number) => Math.max(1, Math.round(value / 8));
+
+/**
+ * The resume, with the private fields removed before it leaves the server.
+ *
+ * Removed, not hidden: a locked visitor's HTML never contains the legal name,
+ * the employers, the schools, or what any project actually was. There is
+ * nothing in the response to uncover with a developer console, because there
+ * is nothing in the response.
+ *
+ * Project *names* survive on purpose — the list says how much work there is,
+ * and each entry keeps its shape — while everything describing the work goes.
+ */
+export const getResume = cache(async (): Promise<ResumeView> => {
   const payload = await client();
-  return payload.findGlobal({ slug: "resume", depth: 1, draft: await isDraft() });
+  const doc = await payload.findGlobal({ slug: "resume", depth: 1, draft: await isDraft() });
+
+  if (await isUnlocked()) return { ...doc, unlocked: true };
+
+  const experience = doc.experience ?? [];
+  const education = doc.education ?? [];
+  const projects = doc.projects ?? [];
+
+  return {
+    ...doc,
+    legalName: null,
+    experience: [],
+    education: [],
+    projects: projects.map((project) => ({
+      id: project.id,
+      name: project.name,
+      // Everything that says what the project was.
+      body: null,
+      period: null,
+    })) as ResumeDoc["projects"],
+    unlocked: false,
+    covered: {
+      legalName: { rows: 1, lines: 1 },
+      experience: { rows: experience.length, lines: 2 },
+      education: { rows: education.length, lines: 1 },
+      projects: { rows: projects.length, lines: roughly(24) },
+    },
+  };
 });
 
 /* ------------------------------------------------------------------- work */

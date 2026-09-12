@@ -235,6 +235,7 @@ const run = async () => {
         label: social.label,
         href: social.href,
         handle: social.handle,
+        private: social.private === true,
       })),
     },
   });
@@ -327,6 +328,7 @@ const run = async () => {
     slug: "resume",
     overrideAccess: true,
     data: {
+      legalName: resume.legalName,
       title: resume.title,
       portrait: resume.portrait
         ? await upload(resume.portrait.src, resume.portrait.alt)

@@ -156,6 +156,8 @@ export type ResumeSkillGroup = {
 };
 
 export type Resume = {
+  /** The name on the documents. Private: /about covers it without a grant. */
+  legalName?: string;
   /** Overrides Profile.roles for the formal document. */
   title: string;
   /** The photograph at the top of /about. Omitted from print. */
@@ -198,4 +200,6 @@ export type Social = Link & {
   handle?: string;
   /** Icon key — see src/components/ui/social-icons.ts. */
   platform?: string;
+  /** Withheld — handle and URL both — from anyone without an access grant. */
+  private?: boolean;
 };

@@ -1,16 +1,26 @@
 import type { Metadata } from "next";
-import { getResume, getHome, getSettings, getSocials, toMedia } from "@/lib/cms";
+import {
+  getResume,
+  getHome,
+  getSettings,
+  getSocials,
+  getPrivateSocialCount,
+  toMedia,
+} from "@/lib/cms";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/motion/Reveal";
 import { ArrowLink } from "@/components/ui/ArrowLink";
 import { MediaFrame } from "@/components/ui/MediaFrame";
 import { SocialIcon, SocialRow } from "@/components/ui/SocialIcon";
 import { PrintButton } from "@/components/resume/PrintButton";
+import { Covered } from "@/components/resume/Covered";
+import { AccessPrompt } from "@/components/resume/AccessPrompt";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [resume, home] = await Promise.all([getResume(), getHome()]);
   return {
     title: "About Me",
+    // home.name is the public name. The legal one must not reach a meta tag.
     description: `${home.name} — ${resume.title}. Introduction, experience, education, projects and skills.`,
   };
 }
@@ -97,11 +107,12 @@ function EntryRow({ entry }: { entry: Entry }) {
 }
 
 export default async function AboutPage() {
-  const [resume, home, settings, socials] = await Promise.all([
+  const [resume, home, settings, socials, privateSocials] = await Promise.all([
     getResume(),
     getHome(),
     getSettings(),
     getSocials(),
+    getPrivateSocialCount(),
   ]);
   const portrait = toMedia(resume.portrait, `${home.name} — portrait`);
 
@@ -148,7 +159,17 @@ export default async function AboutPage() {
         <div className={identity}>
           <div data-resume-name>
             <Reveal>
-              <h1 className="text-display font-medium">{home.name}</h1>
+              {/* A page needs a heading that can be read, so the public name
+                  stands in rather than a covered block — and the covered block
+                  goes beneath it, where it says what is being withheld. */}
+              <h1 className="text-display font-medium">
+                {resume.unlocked ? (resume.legalName ?? home.name) : home.name}
+              </h1>
+              {!resume.unlocked && resume.covered ? (
+                <div className="mt-3 max-w-[16ch]" data-print="hide">
+                  <Covered shape={resume.covered.legalName} label="Name" />
+                </div>
+              ) : null}
               <p className="text-lead mt-3 text-muted">{resume.title}</p>
             </Reveal>
           </div>
@@ -202,6 +223,11 @@ export default async function AboutPage() {
                     <div className="border-t border-rule pt-5">
                       <p className="meta mb-4 text-muted">Elsewhere</p>
                       <SocialRow links={elsewhere} className="gap-x-6 gap-y-3" />
+                      {privateSocials > 0 ? (
+                        <p className="meta mt-3 text-muted" data-print="hide">
+                          {privateSocials} more with a code
+                        </p>
+                      ) : null}
                     </div>
                   </Reveal>
                 </div>
@@ -232,23 +258,39 @@ export default async function AboutPage() {
       ) : null}
 
       <div className="mt-[clamp(3.5rem,10vh,7rem)] max-w-[1200px]" data-resume-body>
-        {(resume.experience ?? []).length > 0 ? (
+        {/* Locked, these three sections hold nothing — the server did not send
+            an employer, a school or a line of any project. What is drawn is the
+            shape of what is missing, so the page reads as withheld rather than
+            as a résumé with nothing on it. */}
+        {resume.unlocked ? (
+          (resume.experience ?? []).length > 0 ? (
+            <Block title="Experience">
+              <div className="flex flex-col gap-8">
+                {(resume.experience ?? []).map((entry, index) => (
+                  <EntryRow key={`${entry.organisation}-${index}`} entry={entry as Entry} />
+                ))}
+              </div>
+            </Block>
+          ) : null
+        ) : resume.covered && resume.covered.experience.rows > 0 ? (
           <Block title="Experience">
-            <div className="flex flex-col gap-8">
-              {(resume.experience ?? []).map((entry, index) => (
-                <EntryRow key={`${entry.organisation}-${index}`} entry={entry as Entry} />
-              ))}
-            </div>
+            <Covered shape={resume.covered.experience} label="Experience" className="gap-8" />
           </Block>
         ) : null}
 
-        {(resume.education ?? []).length > 0 ? (
+        {resume.unlocked ? (
+          (resume.education ?? []).length > 0 ? (
+            <Block title="Education">
+              <div className="flex flex-col gap-8">
+                {(resume.education ?? []).map((entry, index) => (
+                  <EntryRow key={`${entry.organisation}-${index}`} entry={entry as Entry} />
+                ))}
+              </div>
+            </Block>
+          ) : null
+        ) : resume.covered && resume.covered.education.rows > 0 ? (
           <Block title="Education">
-            <div className="flex flex-col gap-8">
-              {(resume.education ?? []).map((entry, index) => (
-                <EntryRow key={`${entry.organisation}-${index}`} entry={entry as Entry} />
-              ))}
-            </div>
+            <Covered shape={resume.covered.education} label="Education" className="gap-8" />
           </Block>
         ) : null}
 
@@ -260,9 +302,15 @@ export default async function AboutPage() {
                   <h3 className="col-span-4 text-small font-medium md:col-span-6 lg:col-span-3">
                     {project.name}
                   </h3>
-                  <p className="col-span-4 max-w-[62ch] text-small text-muted md:col-span-6 lg:col-span-7">
-                    {project.body}
-                  </p>
+                  {/* The name survives being locked; what the project was
+                      does not. The list keeps saying how much work there is. */}
+                  <div className="col-span-4 max-w-[62ch] md:col-span-6 lg:col-span-7">
+                    {project.body ? (
+                      <p className="text-small text-muted">{project.body}</p>
+                    ) : resume.covered ? (
+                      <Covered shape={{ rows: 1, lines: 2 }} label={`${project.name} — detail`} />
+                    ) : null}
+                  </div>
                   {project.period ? (
                     <p className="meta col-span-4 text-muted md:col-span-6 lg:col-span-2 lg:justify-self-end">
                       {project.period}
@@ -313,6 +361,12 @@ export default async function AboutPage() {
               ))}
             </div>
           </Block>
+        ) : null}
+
+        {!resume.unlocked ? (
+          <div className="mt-[clamp(3rem,8vh,5rem)]">
+            <AccessPrompt />
+          </div>
         ) : null}
 
         <Block title="Contact">

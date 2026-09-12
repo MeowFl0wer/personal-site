@@ -52,6 +52,9 @@ const SERVER_ONLY_ROUTES = [
   "src/app/(payload)",
   // Draft mode — it sets a cookie and reads the request.
   "src/app/(frontend)/next",
+  // Redeeming an access code: also a cookie, also a request, and pointless
+  // besides — the export contains nothing private for a code to unlock.
+  "src/app/(frontend)/unlock",
 ];
 
 const log = (...args) => console.log("·", ...args);

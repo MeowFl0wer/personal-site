@@ -10,6 +10,8 @@ import { profile } from "./profile";
  * should be.
  */
 export const resume: Resume = {
+  /** The name on the documents. Private — see the About global. */
+  legalName: "[Real name]",
   title: "Developer / Interface Engineer",
   portrait: {
     src: "/placeholder/about/portrait.jpg",

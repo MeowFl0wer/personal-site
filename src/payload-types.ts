@@ -75,6 +75,7 @@ export interface Config {
     'built-tools': BuiltTool;
     'used-tools': UsedTool;
     posts: Post;
+    'access-grants': AccessGrant;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -90,6 +91,7 @@ export interface Config {
     'built-tools': BuiltToolsSelect<false> | BuiltToolsSelect<true>;
     'used-tools': UsedToolsSelect<false> | UsedToolsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
+    'access-grants': AccessGrantsSelect<false> | AccessGrantsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -1104,6 +1106,40 @@ export interface Post {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Codes and links that unlock the private parts of About. Give each one to a single person so that revoking it costs nothing.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-grants".
+ */
+export interface AccessGrant {
+  id: number;
+  /**
+   * Who this is for. A name is enough — it is for you.
+   */
+  recipient: string;
+  /**
+   * Why they have it, e.g. "job application, Studio X".
+   */
+  purpose: string;
+  /**
+   * Generated when you save. Type it into the prompt on the page, or send the link below.
+   */
+  code?: string | null;
+  /**
+   * After this, the code stops working. Shorten it rather than delete it.
+   */
+  expiresAt: string;
+  /**
+   * Turns it off now, and keeps the record of what it was for.
+   */
+  revoked?: boolean | null;
+  useCount?: number | null;
+  firstUsedAt?: string | null;
+  lastUsedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -1158,6 +1194,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'posts';
         value: number | Post;
+      } | null)
+    | ({
+        relationTo: 'access-grants';
+        value: number | AccessGrant;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1764,6 +1804,22 @@ export interface PostsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-grants_select".
+ */
+export interface AccessGrantsSelect<T extends boolean = true> {
+  recipient?: T;
+  purpose?: T;
+  code?: T;
+  expiresAt?: T;
+  revoked?: T;
+  useCount?: T;
+  firstUsedAt?: T;
+  lastUsedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -1866,6 +1922,10 @@ export interface Home {
  */
 export interface Resume {
   id: number;
+  /**
+   * The name on the documents, shown at the top of /about and on the printed CV. Private: a visitor without a grant sees a covered block here, and the site is signed with the public name everywhere else.
+   */
+  legalName?: string | null;
   /**
    * The formal role line, e.g. "Developer / Interface Engineer".
    */
@@ -2014,6 +2074,10 @@ export interface SiteSetting {
     | null;
   socials?:
     | {
+        /**
+         * Hide this one from visitors without a grant. The handle and the URL are both withheld — a covered block appears in their place.
+         */
+        private?: boolean | null;
         /**
          * Picks the icon.
          */
@@ -2192,6 +2256,7 @@ export interface HomeSelect<T extends boolean = true> {
  * via the `definition` "resume_select".
  */
 export interface ResumeSelect<T extends boolean = true> {
+  legalName?: T;
   title?: T;
   portrait?: T;
   profile?:
@@ -2306,6 +2371,7 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   socials?:
     | T
     | {
+        private?: T;
         platform?: T;
         label?: T;
         handle?: T;

@@ -116,6 +116,14 @@ export const SiteSettings: GlobalConfig = {
               admin: { components: { RowLabel: "@/payload/globals/SocialLabel#SocialLabel" } },
               fields: [
                 {
+                  name: "private",
+                  type: "checkbox",
+                  admin: {
+                    description:
+                      "Hide this one from visitors without a grant. The handle and the URL are both withheld — a covered block appears in their place.",
+                  },
+                },
+                {
                   type: "row",
                   fields: [
                     {
