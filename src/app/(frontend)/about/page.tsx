@@ -14,6 +14,7 @@ import { MediaFrame } from "@/components/ui/MediaFrame";
 import { SocialIcon, SocialRow } from "@/components/ui/SocialIcon";
 import { PrintButton } from "@/components/resume/PrintButton";
 import { Covered } from "@/components/resume/Covered";
+import { GlassFilter } from "@/components/resume/GlassFilter";
 import { AccessPrompt } from "@/components/resume/AccessPrompt";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -133,6 +134,7 @@ export default async function AboutPage() {
     <div className="shell pt-10 md:pt-16" data-resume>
       {/* 00, not 05: this is the preface to the numbered sections, not another
           one of them. */}
+      {!resume.unlocked ? <GlassFilter /> : null}
       <SectionHeader index="00" label="About Me" />
 
       {/* The masthead. Portrait and the standing facts on the left, the name and
