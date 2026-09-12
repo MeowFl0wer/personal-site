@@ -1,6 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { ownerOnly } from "../access";
-import { isUnlocked } from "@/lib/access";
+import { isUnlocked } from "@/lib/unlocked";
 
 /**
  * The one Media Library.

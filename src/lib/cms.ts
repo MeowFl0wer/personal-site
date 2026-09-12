@@ -1,7 +1,8 @@
 import "server-only";
 import { cache } from "react";
 import { draftMode } from "next/headers";
-import { isUnlocked } from "@/lib/access";
+import { isUnlocked } from "@/lib/unlocked";
+import { redact } from "@/lib/redact";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import type {
@@ -213,71 +214,58 @@ export const getCollage = cache(async (): Promise<CollageView> => {
 
 /** Depth 1 so the portrait arrives as a Media document rather than its id. */
 /**
- * What the private half of /about looks like when it is not yours to read.
+ * The resume, with the private strings swapped for others of the same shape.
  *
- * A count and a rough length, and nothing else. The page draws covered blocks
- * from these, so it reads as a page with something on it rather than a page
- * with a hole — which is the whole point of covering rather than removing. The
- * lengths are rounded hard so the shape is honest without being a transcript:
- * "three jobs, two lines each", not "eleven characters".
+ * Swapped rather than removed, and swapped one string at a time, so the page
+ * renders through exactly the same components in exactly the same grid: three
+ * jobs are still three jobs, a two-line summary is still two lines, and an
+ * employer of eleven letters still wraps where it wrapped. Nothing about the
+ * layout is a special case for being locked — the difference is that some of
+ * the words are not the words.
+ *
+ * The real strings never leave the server. What is sent is the substitute, and
+ * the page blurs it, which is a statement about reading rather than about
+ * security: there is nothing underneath the blur to uncover.
+ *
+ * Project names survive, because the list saying how much work there is costs
+ * nothing. Everything describing the work does not.
  */
-export type Covered = { rows: number; lines: number };
-
 export type ResumeView = ResumeDoc & {
-  /** False when the caller may not read the private fields. */
+  /** False when the private strings have been substituted. */
   unlocked: boolean;
-  /** Present only while locked; the shape of what is being withheld. */
-  covered?: {
-    legalName: Covered;
-    experience: Covered;
-    education: Covered;
-    projects: Covered;
-  };
 };
 
-/** Rounds to the nearest few so a block hints at length without spelling it. */
-const roughly = (value: number) => Math.max(1, Math.round(value / 8));
-
-/**
- * The resume, with the private fields removed before it leaves the server.
- *
- * Removed, not hidden: a locked visitor's HTML never contains the legal name,
- * the employers, the schools, or what any project actually was. There is
- * nothing in the response to uncover with a developer console, because there
- * is nothing in the response.
- *
- * Project *names* survive on purpose — the list says how much work there is,
- * and each entry keeps its shape — while everything describing the work goes.
- */
 export const getResume = cache(async (): Promise<ResumeView> => {
   const payload = await client();
   const doc = await payload.findGlobal({ slug: "resume", depth: 1, draft: await isDraft() });
 
   if (await isUnlocked()) return { ...doc, unlocked: true };
 
-  const experience = doc.experience ?? [];
-  const education = doc.education ?? [];
-  const projects = doc.projects ?? [];
+  type Entries = NonNullable<ResumeDoc["experience"]>;
+  const cover = (entries: Entries | null | undefined): Entries =>
+    (entries ?? []).map((entry) => ({
+      ...entry,
+      organisation: redact(entry.organisation),
+      role: redact(entry.role),
+      location: entry.location ? redact(entry.location) : entry.location,
+      start: entry.start ? redact(entry.start) : entry.start,
+      end: entry.end ? redact(entry.end) : entry.end,
+      body: (entry.body ?? []).map((line) => ({ ...line, text: redact(line.text) })),
+      highlights: (entry.highlights ?? []).map((line) => ({ ...line, text: redact(line.text) })),
+    }));
 
   return {
     ...doc,
-    legalName: null,
-    experience: [],
-    education: [],
-    projects: projects.map((project) => ({
-      id: project.id,
-      name: project.name,
-      // Everything that says what the project was.
-      body: null,
-      period: null,
-    })) as ResumeDoc["projects"],
+    legalName: redact(doc.legalName),
+    experience: cover(doc.experience),
+    education: cover(doc.education),
+    projects: (doc.projects ?? []).map((project) => ({
+      ...project,
+      // The name stays; what the project was does not.
+      body: project.body ? redact(project.body) : project.body,
+      period: project.period ? redact(project.period) : project.period,
+    })),
     unlocked: false,
-    covered: {
-      legalName: { rows: 1, lines: 1 },
-      experience: { rows: experience.length, lines: 2 },
-      education: { rows: education.length, lines: 1 },
-      projects: { rows: projects.length, lines: roughly(24) },
-    },
   };
 });
 

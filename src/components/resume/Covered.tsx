@@ -1,101 +1,71 @@
 import { cn } from "@/lib/utils";
-import type { Covered as Shape } from "@/lib/cms";
 
 /**
- * Where something private would be: text, under frosted glass.
+ * Marks a passage as not this reader's to read.
  *
- * The text is invented. That is the whole trick and it is worth being plain
- * about: blurring the real thing would mean the real thing is in the page, and
- * a blur is a picture of privacy rather than privacy — one developer console
- * away from being read. So the server sends a count and a rough line length
- * instead of content, and this draws words that were never anybody's.
+ * It renders its children — the real components, in the real grid, with the
+ * real number of rows — and softens them. The words inside have already been
+ * swapped for others of the same shape on the server, so what is being blurred
+ * is not the content; there is nothing underneath to uncover. The blur is a
+ * statement about reading, not a lock.
  *
- * Two layers do the work. The words are blurred where they sit, which gives the
- * ragged edges and the varying density that make it read as writing rather than
- * as a loading skeleton. Over them is a pane: a backdrop blur, a wash of the
- * page's own paper, and one bright edge along the top, which is what a sheet of
- * glass does to the light and what stops the whole thing looking like a mistake.
+ * Which is why it is gentle. A heavy frosted panel is a piece of furniture that
+ * has to be placed, sized and lined up with something, and the page already has
+ * a layout that works. Two pixels of blur and no selection is enough to say
+ * "not for you" without redesigning the paragraph.
  */
-
-/* Word-shaped and deterministic. Deterministic because the same block has to
-   come out the same on the server and in the browser, and because text that
-   reshuffles on every visit draws the eye to itself. */
-const LETTERS = "aecoinrstlmdupgbhyfvkw";
-
-const words = (seed: number, characters: number) => {
-  const out: string[] = [];
-  let state = seed * 2654435761;
-  const next = () => {
-    state = (state * 1103515245 + 12345) & 0x7fffffff;
-    return state / 0x7fffffff;
-  };
-
-  let used = 0;
-  while (used < characters) {
-    const length = 2 + Math.floor(next() * 8);
-    let word = "";
-    for (let i = 0; i < length; i += 1) word += LETTERS[Math.floor(next() * LETTERS.length)];
-    out.push(word);
-    used += length + 1;
-  }
-  return out.join(" ");
-};
-
 export function Covered({
-  shape,
-  label,
+  children,
   className,
-  seed = 0,
+  /** Small things — a name — need less blur than a block of prose. */
+  strength = "normal",
 }: {
-  shape: Shape;
-  /** Named for a screen reader, which otherwise meets a pane of nothing. */
-  label: string;
+  children: React.ReactNode;
   className?: string;
-  /** Varies the invented words. Two blocks with the same one look copied,
-      which is exactly what a reader notices and what gives the trick away. */
-  seed?: number;
+  strength?: "light" | "normal";
 }) {
-  const rows = Math.max(1, shape.rows);
-  const lines = Math.max(1, shape.lines);
-
   return (
-    <div
-      className={cn("relative isolate select-none", className)}
+    <span
+      // A group rather than an image: what is announced is that something is
+      // here and withheld, not a description of nonsense words.
       role="group"
-      aria-label={`${label} — locked`}
+      aria-label="Locked — an access code shows this"
+      className={cn(
+        "inline-block max-w-full align-top select-none",
+        strength === "light" ? "blur-[2.5px]" : "blur-[3px]",
+        className,
+      )}
     >
-      <div className="flex flex-col gap-6" aria-hidden="true">
-        {Array.from({ length: rows }, (_, row) => (
-          <div key={row} className="flex flex-col gap-1.5">
-            {/* One heavier line to open each entry, the way a real one has a
-                name above its detail. */}
-            <p
-              className="text-small overflow-hidden font-medium text-ink/70 blur-[3.5px]"
-              style={{ width: `${52 + ((seed * 13 + row * 37) % 30)}%` }}
-            >
-              {words(seed * 977 + row * 101 + 7, 22)}
-            </p>
-            {Array.from({ length: lines }, (_, line) => (
-              <p
-                key={line}
-                className="text-small overflow-hidden text-ink/55 blur-[3.5px]"
-                style={{ width: `${[96, 88, 93, 79, 91, 84][(seed + row + line) % 6]}%` }}
-              >
-                {words(seed * 977 + row * 211 + line * 17 + 3, 78)}
-              </p>
-            ))}
-          </div>
-        ))}
-      </div>
-
-      {/* The pane. `backdrop-blur` over an already blurred layer is not
-          redundant — it is what puts the glass in front of the words rather
-          than in the same plane as them. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-x-2 -inset-y-3 rounded-[3px] border border-paper/50 bg-paper/30 backdrop-blur-[2px] backdrop-saturate-150"
-        style={{ boxShadow: "inset 0 1px 0 rgb(255 255 255 / 0.55)" }}
-      />
-    </div>
+      {/* The substituted text is noise; reading it aloud would be worse than
+          saying nothing. The label above carries the meaning. */}
+      <span aria-hidden="true">{children}</span>
+    </span>
   );
 }
+
+/**
+ * The same thing, for a passage that is only sometimes locked.
+ *
+ * Saves the caller from writing the section twice, which is how the two copies
+ * drift apart and one of them forgets to be covered.
+ */
+function Maybe({
+  locked,
+  children,
+  className,
+  strength,
+}: {
+  locked: boolean;
+  children: React.ReactNode;
+  className?: string;
+  strength?: "light" | "normal";
+}) {
+  if (!locked) return <>{children}</>;
+  return (
+    <Covered className={cn("block", className)} strength={strength}>
+      {children}
+    </Covered>
+  );
+}
+
+Covered.Maybe = Maybe;

@@ -162,14 +162,20 @@ export default async function AboutPage() {
               {/* A page needs a heading that can be read, so the public name
                   stands in rather than a covered block — and the covered block
                   goes beneath it, where it says what is being withheld. */}
+              {/* The legal name is the heading. Locked, it is a name of the
+                  same shape with the edges taken off it — the line keeps its
+                  length and the page keeps its opening. */}
               <h1 className="text-display font-medium">
-                {resume.unlocked ? (resume.legalName ?? home.name) : home.name}
+                {resume.legalName ? (
+                  resume.unlocked ? (
+                    resume.legalName
+                  ) : (
+                    <Covered strength="light">{resume.legalName}</Covered>
+                  )
+                ) : (
+                  home.name
+                )}
               </h1>
-              {!resume.unlocked && resume.covered ? (
-                <div className="mt-3 max-w-[16ch]" data-print="hide">
-                  <Covered shape={resume.covered.legalName} label="Name" />
-                </div>
-              ) : null}
               <p className="text-lead mt-3 text-muted">{resume.title}</p>
             </Reveal>
           </div>
@@ -258,66 +264,59 @@ export default async function AboutPage() {
       ) : null}
 
       <div className="mt-[clamp(3.5rem,10vh,7rem)] max-w-[1200px]" data-resume-body>
-        {/* Locked, these three sections hold nothing — the server did not send
-            an employer, a school or a line of any project. What is drawn is the
-            shape of what is missing, so the page reads as withheld rather than
-            as a résumé with nothing on it. */}
-        {resume.unlocked ? (
-          (resume.experience ?? []).length > 0 ? (
-            <Block title="Experience">
+        {/* The same rows either way. Locked, the words in them were swapped
+            on the server for others of the same shape, and the blur says so. */}
+        {(resume.experience ?? []).length > 0 ? (
+          <Block title="Experience">
+            <Covered.Maybe locked={!resume.unlocked}>
               <div className="flex flex-col gap-8">
                 {(resume.experience ?? []).map((entry, index) => (
                   <EntryRow key={`${entry.organisation}-${index}`} entry={entry as Entry} />
                 ))}
               </div>
-            </Block>
-          ) : null
-        ) : resume.covered && resume.covered.experience.rows > 0 ? (
-          <Block title="Experience">
-            <Covered shape={resume.covered.experience} label="Experience" className="gap-8" />
+            </Covered.Maybe>
           </Block>
         ) : null}
 
-        {resume.unlocked ? (
-          (resume.education ?? []).length > 0 ? (
-            <Block title="Education">
+        {(resume.education ?? []).length > 0 ? (
+          <Block title="Education">
+            <Covered.Maybe locked={!resume.unlocked}>
               <div className="flex flex-col gap-8">
                 {(resume.education ?? []).map((entry, index) => (
                   <EntryRow key={`${entry.organisation}-${index}`} entry={entry as Entry} />
                 ))}
               </div>
-            </Block>
-          ) : null
-        ) : resume.covered && resume.covered.education.rows > 0 ? (
-          <Block title="Education">
-            <Covered shape={resume.covered.education} label="Education" className="gap-8" seed={5} />
+            </Covered.Maybe>
           </Block>
         ) : null}
 
         {(resume.projects ?? []).length > 0 ? (
           <Block title="Projects">
             <div className="flex flex-col gap-6">
-              {(resume.projects ?? []).map((project, projectIndex) => (
+              {(resume.projects ?? []).map((project) => (
                 <Reveal key={project.name} className="grid-12 gap-y-2">
                   <h3 className="col-span-4 text-small font-medium md:col-span-6 lg:col-span-3">
                     {project.name}
                   </h3>
-                  {/* The name survives being locked; what the project was
-                      does not. The list keeps saying how much work there is. */}
                   <div className="col-span-4 max-w-[62ch] md:col-span-6 lg:col-span-7">
                     {project.body ? (
-                      <p className="text-small text-muted">{project.body}</p>
-                    ) : resume.covered ? (
-                      <Covered
-                        shape={{ rows: 1, lines: 2 }}
-                        label={`${project.name} — detail`}
-                        seed={projectIndex + 1}
-                      />
+                      resume.unlocked ? (
+                        <p className="text-small text-muted">{project.body}</p>
+                      ) : (
+                        <Covered>
+                          <p className="text-small text-muted">{project.body}</p>
+                        </Covered>
+                      )
                     ) : null}
                   </div>
                   {project.period ? (
                     <p className="meta col-span-4 text-muted md:col-span-6 lg:col-span-2 lg:justify-self-end">
-                      {project.period}
+                      {/* Substituted like the rest of the entry, so it has to
+                          be covered like the rest of it — a swapped date left
+                          sharp just reads as a wrong date. */}
+                      <Covered.Maybe locked={!resume.unlocked} strength="light">
+                        {project.period}
+                      </Covered.Maybe>
                     </p>
                   ) : null}
                 </Reveal>

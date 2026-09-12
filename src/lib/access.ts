@@ -1,72 +1,14 @@
-import "server-only";
-import { createHmac, timingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
 import { getPayload } from "payload";
 import config from "@/payload.config";
+import { ACCESS_COOKIE, seal } from "@/lib/unlocked";
 
 /**
- * Who is allowed to see the private half of /about.
+ * Redeeming a grant.
  *
- * The rule the whole design rests on: a locked visitor is never sent the
- * content. Not hidden with CSS, not delivered and covered — absent from the
- * response. Everything here exists to answer one question on the server before
- * anything is rendered, and `lib/cms.ts` is the only caller, which is what
- * keeps a new page from forgetting to ask.
- *
- * It is deliberately the same shape as draft mode, which this codebase already
- * uses: a cookie set by one route, read everywhere, and a read that answers
- * "no" when there is no request at all — which is the case during the static
- * export, where there is no server to check anything and therefore nothing
- * private may exist.
+ * The checking half lives in lib/unlocked, which the Payload config imports and
+ * therefore has to stay light. This half needs Payload itself, so it stays out
+ * here where only a route handler calls it.
  */
-
-const COOKIE = "about-access";
-
-/** Signed so the cookie cannot be written by hand. */
-const secret = () => process.env.PAYLOAD_SECRET ?? "";
-
-const sign = (value: string) => createHmac("sha256", secret()).update(value).digest("base64url");
-
-const seal = (grantId: string, expiresAt: number) => {
-  const body = `${grantId}.${expiresAt}`;
-  return `${body}.${sign(body)}`;
-};
-
-const unseal = (token: string): { grantId: string; expiresAt: number } | null => {
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
-  const [grantId, expires, signature] = parts;
-  const expected = sign(`${grantId}.${expires}`);
-  // Both are base64url of the same length, so a constant-time compare is safe.
-  if (
-    signature.length !== expected.length ||
-    !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
-  ) {
-    return null;
-  }
-  const expiresAt = Number(expires);
-  if (!Number.isFinite(expiresAt) || expiresAt < Date.now()) return null;
-  return { grantId, expiresAt };
-};
-
-/**
- * True when this request carries a valid, unexpired grant.
- *
- * Not cached: `cookies()` already ties the render to the request, and a grant
- * revoked in the admin should stop working on the next page rather than on the
- * next deploy. The cost is a signature check, not a query — the cookie carries
- * its own expiry, so a live grant costs no database round trip.
- */
-export const isUnlocked = async (): Promise<boolean> => {
-  try {
-    const token = (await cookies()).get(COOKIE)?.value;
-    return token ? unseal(token) !== null : false;
-  } catch {
-    /* No request scope. That is the static export, where the answer has to be
-       "no" — there is no server there to be convinced otherwise. */
-    return false;
-  }
-};
 
 export type GrantCheck =
   | { ok: true; cookie: { name: string; value: string; expires: Date } }
@@ -114,7 +56,7 @@ export const redeem = async (input: string): Promise<GrantCheck> => {
   return {
     ok: true,
     cookie: {
-      name: COOKIE,
+      name: ACCESS_COOKIE,
       // The cookie expires with the grant, never after it.
       value: seal(String(grant.id), expiresAt),
       expires: new Date(expiresAt),
@@ -122,4 +64,3 @@ export const redeem = async (input: string): Promise<GrantCheck> => {
   };
 };
 
-export const ACCESS_COOKIE = COOKIE;
