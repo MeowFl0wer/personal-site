@@ -178,6 +178,10 @@ export interface User {
 export interface Media {
   id: number;
   /**
+   * Withheld from anyone without an access grant — the file itself, not only the page it appears on. A private picture is the easiest thing to forget, because the page can be locked while its images stay on a public URL.
+   */
+  private?: boolean | null;
+  /**
    * What the image shows, for screen readers and for when it fails to load. Required — the site will not ship an image without it.
    */
   alt: string;
@@ -1269,6 +1273,7 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  private?: T;
   alt?: T;
   caption?: T;
   credit?: T;

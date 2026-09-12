@@ -13,7 +13,10 @@ export const profile: Profile = {
   headline: ["Developer,", "builder,", "traveler,", "and occasional", "photographer."],
   roles: ["Developer", "Builder", "Photographer"],
   basedIn: "Amsterdam, NL",
-  currently: "Building interfaces at Placeholder Studio",
+  /* Deliberately without an employer. The work history on /about is
+     private, and naming the current one here would hand over the most
+     current part of it on the home page. */
+  currently: "Building interfaces, mostly where the data is the hard part",
   intro: [
     "I'm interested in building useful software and thoughtful digital experiences.",
     "Outside the screen, I spend my time hiking, traveling and taking photographs.",

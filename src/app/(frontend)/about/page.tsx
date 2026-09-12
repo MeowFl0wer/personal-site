@@ -290,14 +290,14 @@ export default async function AboutPage() {
           ) : null
         ) : resume.covered && resume.covered.education.rows > 0 ? (
           <Block title="Education">
-            <Covered shape={resume.covered.education} label="Education" className="gap-8" />
+            <Covered shape={resume.covered.education} label="Education" className="gap-8" seed={5} />
           </Block>
         ) : null}
 
         {(resume.projects ?? []).length > 0 ? (
           <Block title="Projects">
             <div className="flex flex-col gap-6">
-              {(resume.projects ?? []).map((project) => (
+              {(resume.projects ?? []).map((project, projectIndex) => (
                 <Reveal key={project.name} className="grid-12 gap-y-2">
                   <h3 className="col-span-4 text-small font-medium md:col-span-6 lg:col-span-3">
                     {project.name}
@@ -308,7 +308,11 @@ export default async function AboutPage() {
                     {project.body ? (
                       <p className="text-small text-muted">{project.body}</p>
                     ) : resume.covered ? (
-                      <Covered shape={{ rows: 1, lines: 2 }} label={`${project.name} — detail`} />
+                      <Covered
+                        shape={{ rows: 1, lines: 2 }}
+                        label={`${project.name} — detail`}
+                        seed={projectIndex + 1}
+                      />
                     ) : null}
                   </div>
                   {project.period ? (

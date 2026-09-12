@@ -116,6 +116,57 @@ const withRoutesHidden = async (fn) => {
   }
 };
 
+/**
+ * Every file a private upload owns, including the sizes generated from it.
+ *
+ * Read straight out of the database rather than from anything the application
+ * exports, because this has to hold even if the application is wrong: the
+ * export is a directory of files on a public host, and a file that reaches it
+ * is public forever, including in the git history of whatever branch publishes
+ * it. There is no server here to ask for a code.
+ */
+const privateFiles = () => {
+  if (!fs.existsSync(DB_FILE)) return new Set();
+
+  const rows = spawnSync(
+    "sqlite3",
+    [DB_FILE, "select filename from media where private = 1;"],
+    { encoding: "utf8" },
+  );
+  if (rows.status !== 0) {
+    throw new Error(
+      "Could not ask the database which uploads are private.\n" +
+        "Refusing to copy the media directory rather than guess: a private file " +
+        "published here cannot be taken back.",
+    );
+  }
+
+  const names = new Set();
+  const present = fs.existsSync(path.join(root, "media"))
+    ? fs.readdirSync(path.join(root, "media"))
+    : [];
+
+  for (const filename of rows.stdout.split("\n").map((line) => line.trim()).filter(Boolean)) {
+    names.add(filename);
+
+    /* The generated sizes are the same picture, and they do not have to share
+       the original's extension — Payload stores `photo.webp` beside
+       `photo-800x534.jpg`. Matching on the extension missed every one of them
+       and published three copies of a file that had been marked private, which
+       is the entire failure this function exists to prevent. Match the stem,
+       and require the next character to be a separator so `g-01` does not
+       reach into `g-011`. */
+    const stem = filename.replace(/\.[^.]+$/, "");
+    for (const entry of present) {
+      if (entry === filename) continue;
+      if (!entry.startsWith(stem)) continue;
+      const after = entry[stem.length];
+      if (after === "-" || after === ".") names.add(entry);
+    }
+  }
+  return names;
+};
+
 /** Copies Payload's upload directory into public/ so the export includes it. */
 const copyMedia = () => {
   const source = path.join(root, "media");
@@ -126,8 +177,17 @@ const copyMedia = () => {
     return;
   }
 
-  fs.cpSync(source, PUBLIC_MEDIA, { recursive: true });
-  log(`copied ${fs.readdirSync(PUBLIC_MEDIA).length} media files into public/media/`);
+  const withheld = privateFiles();
+  fs.cpSync(source, PUBLIC_MEDIA, {
+    recursive: true,
+    filter: (from) => !withheld.has(path.basename(from)),
+  });
+
+  const copied = fs.readdirSync(PUBLIC_MEDIA).length;
+  log(
+    `copied ${copied} media files into public/media/` +
+      (withheld.size ? `; withheld ${withheld.size} private file(s)` : ""),
+  );
 };
 
 /**
