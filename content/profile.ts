@@ -6,8 +6,10 @@ import type { Profile, Social } from "./types";
  * page's hero and intro comes from this file.
  */
 export const profile: Profile = {
-  name: "Your Name",
-  shortName: "Your Name",
+  /* The name the site is signed with, everywhere. The one on the documents
+     is Resume.legalName, which is private — see /about. */
+  name: "Euan",
+  shortName: "Euan",
   greeting: "Hi, I'm Your Name 👋",
   /** Hero lines. Keep each under ~15 characters — see --text-hero in globals.css. */
   headline: ["Developer,", "builder,", "traveler,", "and occasional", "photographer."],

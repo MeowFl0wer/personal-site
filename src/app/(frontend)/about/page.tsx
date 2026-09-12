@@ -164,19 +164,31 @@ export default async function AboutPage() {
               {/* A page needs a heading that can be read, so the public name
                   stands in rather than a covered block — and the covered block
                   goes beneath it, where it says what is being withheld. */}
-              {/* The legal name is the heading. Locked, it is a name of the
-                  same shape with the edges taken off it — the line keeps its
-                  length and the page keeps its opening. */}
+              {/* Two names, and which one is the heading depends on where
+                  this is being read. On screen the site's own name carries the
+                  page and the legal one sits beside it, small — covering a
+                  display-sized name leaves a smear where the page should open,
+                  which looks like damage. On paper it is the other way round:
+                  a CV is a formal document and the formal name is its title,
+                  so the pair swaps places. */}
               <h1 className="text-display font-medium">
+                <span className="print:hidden">{home.name}</span>
+
                 {resume.legalName ? (
-                  resume.unlocked ? (
-                    resume.legalName
-                  ) : (
-                    <Covered strength="light">{resume.legalName}</Covered>
-                  )
-                ) : (
-                  home.name
-                )}
+                  <span className="text-title text-muted ml-3 align-baseline font-normal print:hidden">
+                    {resume.unlocked ? (
+                      resume.legalName
+                    ) : (
+                      <Covered strength="light">{resume.legalName}</Covered>
+                    )}
+                  </span>
+                ) : null}
+
+                {/* Paper only. Without a grant there is no legal name to put
+                    here, so the printed document keeps the public one. */}
+                <span className="hidden print:inline">
+                  {resume.unlocked && resume.legalName ? resume.legalName : home.name}
+                </span>
               </h1>
               <p className="text-lead mt-3 text-muted">{resume.title}</p>
             </Reveal>
