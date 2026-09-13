@@ -251,6 +251,42 @@ no such directory.
 
 ---
 
+## The demonstration, and what is only in it
+
+<https://demov1.euan.im> is a **demonstration**. It is the same application as
+the real site, built as a folder of static files with no database and no server
+behind it, and two things behave differently there. Both are switched by one
+Site Settings checkbox — **Demo mode** — which `scripts/build-static.mjs` turns
+on in the throwaway database it builds the preview from. It is off everywhere
+else, including on a fresh install.
+
+| | Demonstration | Real site |
+| --- | --- | --- |
+| The notice on arrival, and at the foot of the home page | shown | never rendered |
+| The private half of /about | shown, with a switch that covers it | withheld — the words are not sent |
+| The name beside Euan | `[Real name]` | whatever is typed into /admin |
+| Access codes | one demo code, checked in the browser | issued and revoked in the admin, checked on the server |
+
+**The two are not the same mechanism, and the difference is the point.** On the
+real site a visitor without a grant never receives the private words at all —
+there is nothing in the page to uncover. On the demonstration everything is in
+the page and a blur is laid over it, because a folder of static files has no
+server to withhold anything and nothing there is worth withholding: the writing
+is invented and the name is a placeholder.
+
+So: the demonstration shows you what the feature looks like. It is not the
+feature. Anyone reading this code to borrow the privacy work wants
+`src/lib/unlocked.ts`, `src/lib/access.ts` and `getResume` in `src/lib/cms.ts`
+— not the demo switch.
+
+The demo-only pieces are `src/components/layout/DemoNotice.tsx`,
+`src/components/resume/DemoSwitch.tsx`, `src/components/resume/DemoLock.tsx`,
+and the block marked `THE DEMONSTRATION'S PRIVACY SWITCH` in
+`src/app/globals.css`. They ship in the bundle but render nothing with the
+checkbox off.
+
+---
+
 ## Licence
 
 Two licences, because there are two different things here.

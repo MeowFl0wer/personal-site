@@ -14,6 +14,7 @@ import { Footer } from "@/components/layout/Footer";
 import { PreviewBanner } from "@/components/layout/PreviewBanner";
 import { CollageGround } from "@/components/home/CollageGround";
 import { DemoNotice } from "@/components/layout/DemoNotice";
+import { PageControls } from "@/components/layout/PageControls";
 import { AccentTheme } from "@/components/layout/AccentTheme";
 
 /** SEO comes from Site Settings, so the title is editable without a deploy. */
@@ -92,6 +93,8 @@ export default async function FrontendLayout({ children }: { children: React.Rea
             <main id="main">
               <PageTransition>{children}</PageTransition>
             </main>
+
+            <PageControls />
 
             <Footer
               socials={socials}

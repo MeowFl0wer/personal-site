@@ -32,15 +32,16 @@ permissions:
 env:
   # ── Where the preview answers ──────────────────────────────────────────────
   #
-  # Serving from the project URL — MeowFl0wer.github.io/personal-site — so
-  # everything lives one directory down and Next bakes that prefix into the
-  # client bundles at build time.
-  # For demov1.euan.im: add the DNS record first, then set BASE_PATH to '' and
-  # PAGES_CNAME to 'demov1.euan.im'. Both change together — a CNAME pointing at
-  # a name that does not resolve yet takes the preview offline, and a base path
-  # left set would prefix every URL on a domain that has no such directory.
-  BASE_PATH: '/personal-site'
-  PAGES_CNAME: ''
+  # Serving from demov1.euan.im, which is a domain root, so there is no
+  # directory to live inside and no prefix to bake into the client bundles.
+  #
+  # The two move together and always have to. A CNAME pointing at a name that
+  # does not resolve takes the preview offline; a base path left set would
+  # prefix every URL on a domain that has no such directory. Going back to the
+  # project URL means setting BASE_PATH to '/personal-site' and PAGES_CNAME to
+  # '' in the same commit.
+  BASE_PATH: ''
+  PAGES_CNAME: 'demov1.euan.im'
 
 jobs:
   build:

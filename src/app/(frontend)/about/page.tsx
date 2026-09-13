@@ -166,10 +166,11 @@ export default async function AboutPage() {
           has used for a century, and the reason it survives is that the eye
           lands on the face and then reads. */}
       <div data-resume-masthead className="grid-12 mt-12 items-start gap-y-10 md:mt-16">
-        {/* `data-print` has to sit on a plain element: Reveal renders its own
-            node and forwards nothing but className. */}
+        {/* Kept on paper as well as on screen. A CV with a photograph on it is
+            ordinary in most of the world, and a document that drops the one
+            thing the page opens with does not read as the same document. */}
         {portrait ? (
-          <div className="col-span-4 md:col-span-2 lg:col-span-3" data-print="hide">
+          <div className="col-span-4 md:col-span-2 lg:col-span-3" data-resume-portrait>
             <Reveal>
               <MediaFrame
                 media={portrait}
@@ -201,12 +202,7 @@ export default async function AboutPage() {
                 {resume.legalName ? (
                   <span className="text-title text-muted ml-3 align-baseline font-normal print:hidden">
                     {resume.demo ? (
-                      <Covered.Maybe
-                        locked={false}
-                        demo
-                        label="Name"
-                        className="align-baseline"
-                      >
+                      <Covered.Maybe locked={false} demo label="Name" align="baseline">
                         {resume.legalName}
                       </Covered.Maybe>
                     ) : resume.unlocked ? (
@@ -369,7 +365,7 @@ export default async function AboutPage() {
 
         {(resume.skills ?? []).length > 0 ? (
           <Block title="Skills">
-            <div className="grid-12 gap-y-8">
+            <div className="grid-12 gap-y-8" data-resume-skills>
               {(resume.skills ?? []).map((group) => (
                 <Reveal key={group.category} className="col-span-4 md:col-span-3 lg:col-span-3">
                   <h3 className="meta mb-3 text-muted">{group.category}</h3>

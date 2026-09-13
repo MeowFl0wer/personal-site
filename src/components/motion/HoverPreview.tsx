@@ -19,7 +19,7 @@ import type { Media } from "@content/types";
 gsap.registerPlugin(useGSAP);
 
 type PreviewApi = {
-  show: (media: Media) => void;
+  show: (media: Media, at?: { x: number; y: number }) => void;
   hide: () => void;
   enabled: boolean;
 };
@@ -56,6 +56,8 @@ export function HoverPreviewProvider({
   const enabled = ready && cursor;
 
   const follow = useRef<{ x: (v: number) => void; y: (v: number) => void } | null>(null);
+  /** Last known pointer position, so a preview can open where the cursor is. */
+  const last = useRef({ x: 0, y: 0 });
   const visible = useRef(false);
 
   useGSAP(
@@ -71,7 +73,14 @@ export function HoverPreviewProvider({
       gsap.set(plate.current, { autoAlpha: 0 });
       gsap.set(inner.current, { clipPath: "inset(100% 0% 0% 0%)", scale: spring.preview.scaleFrom });
 
+      /* Recorded whether or not the plate is showing. It used to be gated on
+         visibility, which meant the plate was faded in wherever it happened to
+         be sitting — the top-left corner on a fresh page — and only found the
+         pointer on the next movement. Anyone who moved onto a link and stopped
+         saw a picture appear in the corner of the window, which reads as a
+         broken page rather than as a preview. */
       const onMove = (event: PointerEvent) => {
+        last.current = { x: event.clientX, y: event.clientY };
         if (!visible.current) return;
         follow.current?.x(event.clientX);
         follow.current?.y(event.clientY);
@@ -84,12 +93,19 @@ export function HoverPreviewProvider({
   );
 
   const show = useCallback(
-    (next: Media) => {
+    (next: Media, at?: { x: number; y: number }) => {
       if (!enabled) return;
+      /* The entering event's own coordinates, when there are any. `pointerenter`
+         fires before the `pointermove` that caused it, so the recorded position
+         is still the previous one at this instant — and using it puts the plate
+         wherever the pointer was last time rather than where it is. */
+      if (at) last.current = at;
       setMedia(next);
       visible.current = true;
 
       gsap.killTweensOf([plate.current, inner.current]);
+      /* Put it under the pointer before it is visible, not after. */
+      gsap.set(plate.current, { x: last.current.x, y: last.current.y });
       gsap.to(plate.current, { autoAlpha: 1, duration: duration.fast, ease: ease.primary });
       gsap.to(inner.current, {
         clipPath: "inset(0% 0% 0% 0%)",
@@ -190,7 +206,7 @@ export function HoverPreviewTrigger({
     <div
       className={className}
       onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") show(media);
+        if (event.pointerType === "mouse") show(media, { x: event.clientX, y: event.clientY });
       }}
       onPointerLeave={hide}
       onFocusCapture={() => show(media)}

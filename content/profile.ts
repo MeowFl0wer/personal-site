@@ -38,7 +38,10 @@ export const profile: Profile = {
  * src/components/ui/social-icons.ts for the full list of available marks.
  */
 export const socials: Social[] = [
-  { platform: "github", label: "GitHub", href: "https://github.com/your-handle", handle: "@your-handle", external: true },
+  /* The repository this site is, not a personal profile. On the demonstration
+     it is the thing someone clicking the icon is actually after; on the real
+     site it is a sensible default to change in the admin. */
+  { platform: "github", label: "GitHub", href: "https://github.com/MeowFl0wer/personal-site", handle: "MeowFl0wer/personal-site", external: true },
   { platform: "instagram", label: "Instagram", href: "https://instagram.com/your-handle", handle: "@your-handle", external: true },
   { platform: "x", label: "X", href: "https://x.com/your-handle", handle: "@your-handle", external: true, private: true },
   { platform: "bilibili", label: "Bilibili", href: "https://space.bilibili.com/your-id", handle: "your-id", external: true },

@@ -41,7 +41,7 @@ export const SiteSettings: GlobalConfig = {
               type: "checkbox",
               admin: {
                 description:
-                  "This copy of the site is a demonstration. Adds a notice that the writing is invented, replaces the private half of About with a switch anyone can try, and is what the GitHub Pages preview runs on. Off on the real site.",
+                  "This copy of the site is a demonstration. Adds a notice that the writing is invented, replaces the private half of About with a switch anyone can try, and is what the preview at demov1.euan.im runs on. Off on the real site, and off on a fresh install — build-static turns it on in the throwaway database it builds the preview from. See the README: the demonstration shows what the privacy feature looks like, it is not the feature.",
               },
             },
             {
