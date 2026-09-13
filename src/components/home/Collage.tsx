@@ -87,7 +87,11 @@ export function Collage({ data }: { data: CollageView }) {
             Measured once against that row; both are anchored to the bottom, so
             it holds as the window changes height. */}
         <div className="mb-[4.125rem] flex flex-col items-center gap-[clamp(5rem,9vh,7rem)]">
-        <div className="relative w-[clamp(15rem,22vw,21rem)]" style={{ aspectRatio: "4 / 5" }}>
+        {/* Sized in step with the shell: the card's cap used to be reached at
+            about 1530px, so on a desktop monitor the arrangement stayed the
+            size it is on a laptop while the half of the hero it sits in grew
+            around it, and it read as a postcard adrift in the corner. */}
+        <div className="relative w-[clamp(15rem,22vw,26rem)]" style={{ aspectRatio: "4 / 5" }}>
           {themes.map((theme, index) => {
             /* Signed distance, wrapped, so the arrangement after the current
                one always enters from the right and the one before always

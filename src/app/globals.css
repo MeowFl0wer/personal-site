@@ -155,6 +155,29 @@
   }
 }
 
+/* The other end of the same problem. 1600 is the measure this was drawn at,
+   and on a laptop the page fills the window because the window is narrower
+   than that. On a desktop monitor it stops there and the window keeps going,
+   so the whole site sits in the middle with a hand's width of nothing down
+   each side — it reads as a page that does not know the screen got bigger.
+
+   So past the measure the shell keeps growing, slower than the window and
+   only up to a point: 92vw is the same 1600 at 1740px, which is why the
+   override starts there rather than at a round number — it has to take over
+   exactly where the cap would have bitten, or the page jumps as the window
+   crosses it.
+
+   The ceiling is deliberate. The hero is a composition of two halves and the
+   type in the left one is limited by height, not width, so on a very wide
+   screen stretching further only opens a hole in the middle. Growing to
+   1920 and then centring is the honest answer; past that the margins are the
+   design. */
+@media (min-width: 1740px) {
+  :root {
+    --shell-max: min(92vw, 1920px);
+  }
+}
+
 /* ==========================================================================
    BASE
    ========================================================================== */
