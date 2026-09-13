@@ -31,11 +31,6 @@ export const projects: Project[] = [
     stack: ["TypeScript", "Next.js", "WebGL", "Python"],
     summary:
       "A research interface that turns a large, messy document corpus into something you can actually read.",
-    // To make the hover preview play a short loop instead of showing a still,
-    // drop an .mp4 in /public and add:
-    //   video: "/placeholder/work/project-alpha-preview.mp4",
-    //   poster: "/placeholder/work/project-alpha-cover.jpg",
-    // HoverPreview already handles both cases; no placeholder videos ship here.
     cover: cover("project-alpha"),
     link: { label: "alpha.example.com", href: "https://example.com", external: true },
     featured: true,

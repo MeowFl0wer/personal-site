@@ -2,7 +2,7 @@ import type { CollectionConfig } from "payload";
 import { anyone, ownerOnly } from "../access";
 import { revalidateAlways } from "../hooks/revalidate";
 
-/** Things I've built. Reuses the site's shared hover-preview component. */
+/** Things I've built. Each one carries a screenshot and its links. */
 export const BuiltTools: CollectionConfig = {
   slug: "built-tools",
   labels: { singular: "Built Tool", plural: "Tools — Built" },

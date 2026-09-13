@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { HoverPreviewProvider, HoverPreviewTrigger, useHoverPreview } from "@/components/motion/HoverPreview";
 import { Reveal } from "@/components/motion/Reveal";
 import { pad } from "@/lib/utils";
 import type { Media } from "@content/types";
@@ -28,11 +27,8 @@ export type ProjectListItem = {
  * thumbnail instead, so the same information is available by other means.
  */
 function ProjectRow({ project, index }: { project: ProjectListItem; index: number }) {
-  const { enabled } = useHoverPreview();
-
   return (
     <li data-reveal-item>
-      <HoverPreviewTrigger media={project.cover}>
         <Link
           href={`/work/${project.slug}`}
           data-cursor-state="view"
@@ -48,8 +44,10 @@ function ProjectRow({ project, index }: { project: ProjectListItem; index: numbe
               <span className="mt-1 block text-small text-muted">{project.summary}</span>
             </span>
 
-            {/* Inline thumbnail — the fallback path for touch and reduced motion. */}
-            {!enabled ? (
+            {/* The thumbnail. It used to be the fallback for touch and reduced
+                motion, shown only where the hover preview could not run; with
+                that gone it is simply the picture, for everyone. */}
+            {project.cover ? (
               <span className="relative col-span-4 aspect-[16/10] overflow-hidden bg-ink/[0.06] md:col-span-3">
                 <Image
                   src={project.cover.src}
@@ -70,14 +68,13 @@ function ProjectRow({ project, index }: { project: ProjectListItem; index: numbe
             </span>
           </div>
         </Link>
-      </HoverPreviewTrigger>
     </li>
   );
 }
 
 export function ProjectList({ projects }: { projects: ProjectListItem[] }) {
   return (
-    <HoverPreviewProvider>
+    <>
       <Reveal stagger="block">
         <ul className="border-t border-rule">
           {projects.map((project, index) => (
@@ -85,6 +82,6 @@ export function ProjectList({ projects }: { projects: ProjectListItem[] }) {
           ))}
         </ul>
       </Reveal>
-    </HoverPreviewProvider>
+    </>
   );
 }

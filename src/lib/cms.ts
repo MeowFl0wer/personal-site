@@ -316,7 +316,14 @@ export const getNextProject = cache(async (slug: string) => {
   return projects[(index + 1) % projects.length];
 });
 
-/** Cover media plus its optional hover loop, in the shape HoverPreview wants. */
+/**
+ * Cover media, carrying the optional preview loop when one is uploaded.
+ *
+ * Nothing renders that loop today — the hover preview that used to play it is
+ * gone. The field stays because the footage is the editor's, not the
+ * component's, and dropping it would mean a schema change to delete uploads
+ * that a later treatment may well want back.
+ */
 export const projectCover = (project: ProjectDoc): Media => {
   const cover = toMediaOrFallback(project.cover, `${project.title} — cover image`);
   const video = project.previewVideo;

@@ -1,11 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import {
-  HoverPreviewProvider,
-  HoverPreviewTrigger,
-  useHoverPreview,
-} from "@/components/motion/HoverPreview";
 import { Reveal } from "@/components/motion/Reveal";
 import { ArrowLink } from "@/components/ui/ArrowLink";
 import { pad } from "@/lib/utils";
@@ -22,21 +17,18 @@ export type BuiltToolItem = {
 };
 
 /**
- * Built tools — the third consumer of the shared HoverPreview, and the reason it
- * was built as a provider rather than baked into the work list.
+ * Built tools.
  *
  * The entry stacks rather than running as a twelve-column row. This list now
  * lives in one half of the page beside Use, and a row of four columns inside a
- * six-column container is four columns of two words each. The screenshot is
- * carried by the cursor preview on a pointer device and falls back to an inline
- * image everywhere else, which is the only place it costs vertical space.
+ * six-column container is four columns of two words each. The screenshot sits
+ * inline above the words, which is the one place it costs vertical space — it
+ * used to be carried by a cursor preview on pointer devices, and that is gone.
  */
 function ToolRow({ tool, index }: { tool: BuiltToolItem; index: number }) {
-  const { enabled } = useHoverPreview();
-
   const row = (
     <div className="border-b border-rule py-7">
-      {!enabled && tool.preview ? (
+      {tool.preview ? (
         <div className="relative mb-5 aspect-[16/10] w-full overflow-hidden bg-ink/[0.06]">
           <Image
             src={tool.preview.src}
@@ -79,20 +71,12 @@ function ToolRow({ tool, index }: { tool: BuiltToolItem; index: number }) {
 
   // The row is deliberately not a single link: each tool has two destinations,
   // so the links stay explicit rather than making the whole row ambiguous.
-  return (
-    <li data-reveal-item>
-      {tool.preview ? (
-        <HoverPreviewTrigger media={tool.preview}>{row}</HoverPreviewTrigger>
-      ) : (
-        row
-      )}
-    </li>
-  );
+  return <li data-reveal-item>{row}</li>;
 }
 
 export function BuiltToolList({ tools }: { tools: BuiltToolItem[] }) {
   return (
-    <HoverPreviewProvider>
+    <>
       {/* No border-t: the section heading above already draws the rule that
           opens this list, and two hairlines a gap apart read as a mistake. */}
       <Reveal stagger="block">
@@ -102,6 +86,6 @@ export function BuiltToolList({ tools }: { tools: BuiltToolItem[] }) {
           ))}
         </ul>
       </Reveal>
-    </HoverPreviewProvider>
+    </>
   );
 }
