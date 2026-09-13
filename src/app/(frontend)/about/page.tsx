@@ -395,12 +395,6 @@ export default async function AboutPage() {
           </Block>
         ) : null}
 
-        {!resume.unlocked ? (
-          <div className="mt-[clamp(3rem,8vh,5rem)]">
-            <AccessPrompt />
-          </div>
-        ) : null}
-
         <Block title="Contact">
           <Reveal className="flex flex-wrap gap-x-10 gap-y-4">
             {(resume.contact ?? []).map((link) => (
@@ -417,6 +411,12 @@ export default async function AboutPage() {
           </Reveal>
           {resume.printNote ? <p className="meta mt-8 text-muted">{resume.printNote}</p> : null}
         </Block>
+
+        {!resume.unlocked ? (
+          <div className="mt-[clamp(3rem,8vh,5rem)]">
+            <AccessPrompt />
+          </div>
+        ) : null}
       </div>
     </div>
   );

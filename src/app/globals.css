@@ -343,6 +343,19 @@
     animation: caption-in var(--duration-ui) var(--ease-primary) both;
   }
 
+  /* The seconds in the hero's clock. Rising, because a clock counts up and
+     the eye reads a digit arriving from below as the next one. */
+  @keyframes digit-roll {
+    from {
+      transform: translateY(0.9em);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
   @keyframes caption-in {
     from {
       opacity: 0;
