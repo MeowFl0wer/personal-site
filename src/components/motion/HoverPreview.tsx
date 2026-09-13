@@ -19,7 +19,7 @@ import type { Media } from "@content/types";
 gsap.registerPlugin(useGSAP);
 
 type PreviewApi = {
-  show: (media: Media) => void;
+  show: (media: Media, at?: { x: number; y: number }) => void;
   hide: () => void;
   enabled: boolean;
 };
@@ -93,8 +93,13 @@ export function HoverPreviewProvider({
   );
 
   const show = useCallback(
-    (next: Media) => {
+    (next: Media, at?: { x: number; y: number }) => {
       if (!enabled) return;
+      /* The entering event's own coordinates, when there are any. `pointerenter`
+         fires before the `pointermove` that caused it, so the recorded position
+         is still the previous one at this instant — and using it puts the plate
+         wherever the pointer was last time rather than where it is. */
+      if (at) last.current = at;
       setMedia(next);
       visible.current = true;
 
@@ -201,7 +206,7 @@ export function HoverPreviewTrigger({
     <div
       className={className}
       onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") show(media);
+        if (event.pointerType === "mouse") show(media, { x: event.clientX, y: event.clientY });
       }}
       onPointerLeave={hide}
       onFocusCapture={() => show(media)}
