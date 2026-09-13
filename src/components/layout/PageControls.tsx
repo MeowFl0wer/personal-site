@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -23,15 +23,43 @@ const DARK_ROUTES = ["/gallery"];
 /** Far enough that the header has left, near enough to still feel like a way back. */
 const APPEAR_AFTER = 420;
 
+/** Air between the lower button and the footer's rule. */
+const CLEARANCE = 20;
+
 export function PageControls() {
   const pathname = usePathname();
   const [shown, setShown] = useState(false);
+  /* How far to ride up so the pair never sits on the footer. */
+  const [lift, setLift] = useState(0);
+  const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onScroll = () => setShown(window.scrollY > APPEAR_AFTER);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const measure = () => {
+      setShown(window.scrollY > APPEAR_AFTER);
+
+      /* Fixed controls and a page that ends are a bad pair: at the foot of the
+         document these would come to rest on top of the credit and the
+         accounts. So at the end of the scroll they stop being fixed in
+         practice and sit above the rule that opens the footer — which is the
+         line the footer draws for itself, so this stays right if that block
+         ever changes height. */
+      const element = box.current;
+      const footer = document.querySelector("[data-site-footer]");
+      if (!element || !footer) return setLift(0);
+
+      const bottom = Number.parseFloat(window.getComputedStyle(element).bottom) || 0;
+      const restingEdge = window.innerHeight - bottom;
+      const line = footer.getBoundingClientRect().top;
+      setLift(Math.max(0, restingEdge - (line - CLEARANCE)));
+    };
+
+    measure();
+    window.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+    return () => {
+      window.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+    };
   }, []);
 
   const dark = DARK_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
@@ -41,12 +69,16 @@ export function PageControls() {
 
   return (
     <div
+      ref={box}
       data-print="hide"
       aria-hidden={!shown}
+      /* One transform carries both movements. Tailwind's translate utilities
+         would fight the lift for the same property. */
+      style={{ transform: `translateY(${(shown ? 0 : 8) - lift}px)` }}
       className={cn(
         "fixed right-[clamp(20px,4.5vw,64px)] bottom-[clamp(20px,4vh,40px)] z-40",
         "flex flex-col gap-2 transition-[opacity,transform] duration-[--duration-ui] ease-[--ease-primary]",
-        shown ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0",
+        shown ? "opacity-100" : "pointer-events-none opacity-0",
       )}
     >
       {/* Only where there is somewhere to go. On the home page itself the
