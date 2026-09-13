@@ -393,6 +393,22 @@ html[data-motion="off"] *::after {
   html[data-cursor="on"] [role="button"] {
     cursor: none;
   }
+
+  /* Except inside a modal dialog, where the substitute cannot follow.
+     `showModal()` paints in the browser's top layer, above everything the
+     document can reach — and the custom cursor is an ordinary fixed element
+     with a z-index, so it is stuck underneath. Hiding the real pointer there
+     leaves no pointer at all, which is what it looked like: the button
+     disappearing under the mouse. */
+  html[data-cursor="on"] dialog:modal,
+  html[data-cursor="on"] dialog:modal * {
+    cursor: auto;
+  }
+  html[data-cursor="on"] dialog:modal a,
+  html[data-cursor="on"] dialog:modal button,
+  html[data-cursor="on"] dialog:modal [role="button"] {
+    cursor: pointer;
+  }
 }
 
 /* ==========================================================================

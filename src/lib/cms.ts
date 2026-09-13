@@ -227,8 +227,9 @@ export const getCollage = cache(async (): Promise<CollageView> => {
  * the page blurs it, which is a statement about reading rather than about
  * security: there is nothing underneath the blur to uncover.
  *
- * Project names survive, because the list saying how much work there is costs
- * nothing. Everything describing the work does not.
+ * Projects are not touched. They were covered at first and it was the wrong
+ * call: the work is the part worth showing, and a page that hides it is a page
+ * with nothing on it for anyone who has not been sent a code.
  */
 export type ResumeView = ResumeDoc & {
   /** False when the private strings have been substituted. */
@@ -259,12 +260,6 @@ export const getResume = cache(async (): Promise<ResumeView> => {
     legalName: redact(doc.legalName),
     experience: cover(doc.experience),
     education: cover(doc.education),
-    projects: (doc.projects ?? []).map((project) => ({
-      ...project,
-      // The name stays; what the project was does not.
-      body: project.body ? redact(project.body) : project.body,
-      period: project.period ? redact(project.period) : project.period,
-    })),
     unlocked: false,
   };
 });

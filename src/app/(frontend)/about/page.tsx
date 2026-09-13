@@ -15,6 +15,7 @@ import { SocialIcon, SocialRow } from "@/components/ui/SocialIcon";
 import { PrintButton } from "@/components/resume/PrintButton";
 import { Covered } from "@/components/resume/Covered";
 import { AccessDialog } from "@/components/resume/AccessDialog";
+import { AccessPrompt } from "@/components/resume/AccessPrompt";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [resume, home] = await Promise.all([getResume(), getHome()]);
@@ -340,22 +341,11 @@ export default async function AboutPage() {
                     {project.name}
                   </h3>
                   <div className="col-span-4 max-w-[62ch] md:col-span-6 lg:col-span-7">
-                    {project.body ? (
-                      <p className="text-small text-muted">
-                        <Covered.Maybe locked={!resume.unlocked} label="Project detail">
-                          {project.body}
-                        </Covered.Maybe>
-                      </p>
-                    ) : null}
+                    {project.body ? <p className="text-small text-muted">{project.body}</p> : null}
                   </div>
                   {project.period ? (
                     <p className="meta col-span-4 text-muted md:col-span-6 lg:col-span-2 lg:justify-self-end">
-                      {/* Substituted like the rest of the entry, so it has to
-                          be covered like the rest of it — a swapped date left
-                          sharp just reads as a wrong date. */}
-                      <Covered.Maybe locked={!resume.unlocked} label="Dates">
-                        {project.period}
-                      </Covered.Maybe>
+                      {project.period}
                     </p>
                   ) : null}
                 </Reveal>
@@ -403,6 +393,12 @@ export default async function AboutPage() {
               ))}
             </div>
           </Block>
+        ) : null}
+
+        {!resume.unlocked ? (
+          <div className="mt-[clamp(3rem,8vh,5rem)]">
+            <AccessPrompt />
+          </div>
         ) : null}
 
         <Block title="Contact">
