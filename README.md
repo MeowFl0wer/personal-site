@@ -10,6 +10,7 @@ and images. Interaction is where the technology shows. Nothing moves unless you 
 - **Admin** → `/admin`
 - **Day-to-day use** → [ADMIN_GUIDE.md](./ADMIN_GUIDE.md)
 - **What's borrowed from open source, and why** → [REFERENCES.md](./REFERENCES.md)
+- **What you may reuse** → [Licence](#licence)
 
 ---
 
@@ -247,3 +248,38 @@ To move it to **demov1.euan.im**:
 Those two change **together**. A CNAME published for a name that does not resolve yet takes
 the preview offline, and a base path left set would prefix every URL on a domain that has
 no such directory.
+
+---
+
+## Licence
+
+Two licences, because there are two different things here.
+
+**The code is MIT** — see [LICENSE](./LICENSE). Take it, change it, build your own
+site on it, ship it commercially. The only condition the licence imposes is the usual
+one: keep the copyright notice with the source.
+
+**The photographs are not licensed at all** — see [LICENSE-MEDIA](./LICENSE-MEDIA).
+Every picture in `public/placeholder/` was taken and made by hand, and the cut-outs on
+the home page are of a real person. They are in the repository because the code will
+not run without images, not because they are being given away. That includes using
+them as placeholders, and includes training data.
+
+If you fork this, **replace the pictures before you deploy**. There is a script for
+exactly that:
+
+```bash
+npm run photos -- "/path/to/your/own/photographs"
+npm run collage -- "/path/to/your/own/cut-outs"
+npm run seed -- --force
+```
+
+**A link back is asked for, not demanded.** If this site is running somewhere because
+of this repository, a credit in the footer pointing at
+[github.com/MeowFl0wer/personal-site](https://github.com/MeowFl0wer/personal-site)
+would be appreciated. MIT does not make that a condition and this README does not
+either — a licence that demanded a visible credit would stop being MIT, and people
+avoid licences they have to read carefully. It is a request, and most people honour
+requests.
+
+Want to use a photograph anyway? Open an issue. The answer is often yes.

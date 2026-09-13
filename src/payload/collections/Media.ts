@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
-import { anyone, ownerOnly } from "../access";
+import { ownerOnly } from "../access";
+import { isUnlocked } from "@/lib/unlocked";
 
 /**
  * The one Media Library.
@@ -20,7 +21,20 @@ export const Media: CollectionConfig = {
     description: "Images and video. Upload once, reference anywhere.",
   },
   access: {
-    read: anyone,
+    /* Public by default, and withheld per file when it is marked private —
+       which covers the file route as well as the API, so a locked page's
+       pictures are not sitting on a URL of their own. Signed in, everything is
+       visible; that is the same door the admin uses. */
+    read: async ({ req }) => {
+      if (req.user) return true;
+      if (await isUnlocked()) return true;
+      /* `not_equals: true` is not the same question. An upload that predates
+         the flag has no value at all, and in SQL a comparison against NULL is
+         neither true nor false — it is NULL, and the row falls out. That is
+         every existing picture on the site. Ask for the two states that mean
+         public instead. */
+      return { or: [{ private: { equals: false } }, { private: { exists: false } }] };
+    },
     create: ownerOnly,
     update: ownerOnly,
     delete: ownerOnly,
@@ -44,6 +58,16 @@ export const Media: CollectionConfig = {
     mimeTypes: ["image/*", "video/mp4", "video/webm", "video/quicktime"],
   },
   fields: [
+    {
+      name: "private",
+      type: "checkbox",
+      index: true,
+      admin: {
+        position: "sidebar",
+        description:
+          "Withheld from anyone without an access grant — the file itself, not only the page it appears on. A private picture is the easiest thing to forget, because the page can be locked while its images stay on a public URL.",
+      },
+    },
     {
       name: "alt",
       type: "text",

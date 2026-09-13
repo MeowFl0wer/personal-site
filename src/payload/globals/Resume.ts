@@ -35,6 +35,14 @@ export const Resume: GlobalConfig = {
           label: "Profile",
           fields: [
             {
+              name: "legalName",
+              type: "text",
+              admin: {
+                description:
+                  "The name on the documents, shown at the top of /about and on the printed CV. Private: a visitor without a grant sees a covered block here, and the site is signed with the public name everywhere else.",
+              },
+            },
+            {
               name: "title",
               type: "text",
               required: true,

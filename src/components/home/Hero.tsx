@@ -6,6 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { ProximityField, ProximityItem, SplitChars } from "@/components/motion/ProximityField";
 import { useMotion } from "@/components/motion/MotionProvider";
 import { Collage } from "@/components/home/Collage";
+import { Clock } from "@/components/home/Clock";
 import { duration, ease, stagger } from "@/lib/motion";
 import type { Home } from "@/payload-types";
 import type { CollageView } from "@/components/home/collage-types";
@@ -59,7 +60,7 @@ export function Hero({ home, collage }: { home: Home; collage: CollageView }) {
       {/* NAME ————————————————————————————————— YEAR */}
       <div data-hero-meta className="flex items-baseline justify-between">
         <p className="meta">{home.name}</p>
-        {home.year ? <p className="meta text-muted">{home.year}</p> : null}
+        <Clock fallback={`${home.year ?? ""}/--/-- --:--:--`} />
       </div>
 
       <div className="py-[clamp(2rem,6vh,5rem)]">

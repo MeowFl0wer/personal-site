@@ -75,6 +75,7 @@ export interface Config {
     'built-tools': BuiltTool;
     'used-tools': UsedTool;
     posts: Post;
+    'access-grants': AccessGrant;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -90,6 +91,7 @@ export interface Config {
     'built-tools': BuiltToolsSelect<false> | BuiltToolsSelect<true>;
     'used-tools': UsedToolsSelect<false> | UsedToolsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
+    'access-grants': AccessGrantsSelect<false> | AccessGrantsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -175,6 +177,10 @@ export interface User {
  */
 export interface Media {
   id: number;
+  /**
+   * Withheld from anyone without an access grant — the file itself, not only the page it appears on. A private picture is the easiest thing to forget, because the page can be locked while its images stay on a public URL.
+   */
+  private?: boolean | null;
   /**
    * What the image shows, for screen readers and for when it fails to load. Required — the site will not ship an image without it.
    */
@@ -1104,6 +1110,40 @@ export interface Post {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Codes and links that unlock the private parts of About. Give each one to a single person so that revoking it costs nothing.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-grants".
+ */
+export interface AccessGrant {
+  id: number;
+  /**
+   * Who this is for. A name is enough — it is for you.
+   */
+  recipient: string;
+  /**
+   * Why they have it, e.g. "job application, Studio X".
+   */
+  purpose: string;
+  /**
+   * Generated when you save. Type it into the prompt on the page, or send the link below.
+   */
+  code?: string | null;
+  /**
+   * After this, the code stops working. Shorten it rather than delete it.
+   */
+  expiresAt: string;
+  /**
+   * Turns it off now, and keeps the record of what it was for.
+   */
+  revoked?: boolean | null;
+  useCount?: number | null;
+  firstUsedAt?: string | null;
+  lastUsedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -1158,6 +1198,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'posts';
         value: number | Post;
+      } | null)
+    | ({
+        relationTo: 'access-grants';
+        value: number | AccessGrant;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1229,6 +1273,7 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  private?: T;
   alt?: T;
   caption?: T;
   credit?: T;
@@ -1764,6 +1809,22 @@ export interface PostsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-grants_select".
+ */
+export interface AccessGrantsSelect<T extends boolean = true> {
+  recipient?: T;
+  purpose?: T;
+  code?: T;
+  expiresAt?: T;
+  revoked?: T;
+  useCount?: T;
+  firstUsedAt?: T;
+  lastUsedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -1866,6 +1927,10 @@ export interface Home {
  */
 export interface Resume {
   id: number;
+  /**
+   * The name on the documents, shown at the top of /about and on the printed CV. Private: a visitor without a grant sees a covered block here, and the site is signed with the public name everywhere else.
+   */
+  legalName?: string | null;
   /**
    * The formal role line, e.g. "Developer / Interface Engineer".
    */
@@ -1995,6 +2060,10 @@ export interface SiteSetting {
   siteUrl?: string | null;
   email: string;
   /**
+   * This copy of the site is a demonstration. Adds a notice that the writing is invented, replaces the private half of About with a switch anyone can try, and is what the GitHub Pages preview runs on. Off on the real site.
+   */
+  demoMode?: boolean | null;
+  /**
    * The single accent tone. Chosen from the palette rather than picked freely, so it always sits correctly against the ground wash.
    */
   accentColor?: ('harbor' | 'clay' | 'ink' | 'moss' | 'slate' | 'ochre') | null;
@@ -2014,6 +2083,10 @@ export interface SiteSetting {
     | null;
   socials?:
     | {
+        /**
+         * Hide this one from visitors without a grant. The handle and the URL are both withheld — a covered block appears in their place.
+         */
+        private?: boolean | null;
         /**
          * Picks the icon.
          */
@@ -2192,6 +2265,7 @@ export interface HomeSelect<T extends boolean = true> {
  * via the `definition` "resume_select".
  */
 export interface ResumeSelect<T extends boolean = true> {
+  legalName?: T;
   title?: T;
   portrait?: T;
   profile?:
@@ -2291,6 +2365,7 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   siteName?: T;
   siteUrl?: T;
   email?: T;
+  demoMode?: T;
   accentColor?: T;
   seoTitle?: T;
   seoDescription?: T;
@@ -2306,6 +2381,7 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   socials?:
     | T
     | {
+        private?: T;
         platform?: T;
         label?: T;
         handle?: T;

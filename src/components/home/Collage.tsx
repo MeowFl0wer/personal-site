@@ -71,7 +71,10 @@ export function Collage({ data }: { data: CollageView }) {
          page's margin and the collage is not page content — it is pinned into
          the space the headline leaves, and sitting it flush against the same
          line as the text below reads as a column it is not part of. */
-      className="pointer-events-none absolute inset-y-0 right-[2.25rem] hidden w-[44%] items-center justify-center lg:flex"
+      /* Anchored to the bottom rather than centred, because what it lines up
+         with — the row of standing facts — is anchored there too. Centred, the
+         two drift apart the moment the window changes height. */
+      className="pointer-events-none absolute inset-y-0 right-[4.6rem] hidden w-[44%] items-end justify-center lg:flex"
       onMouseEnter={() => setHeld(true)}
       onMouseLeave={() => setHeld(false)}
       onFocusCapture={() => setHeld(true)}
@@ -80,7 +83,10 @@ export function Collage({ data }: { data: CollageView }) {
       {/* The cut-outs hang well below the card — that overhang is what makes
           them look stuck on rather than printed — so the switch has to clear
           the lowest of them, not the card's edge. */}
-      <div className="flex flex-col items-center gap-[clamp(5rem,9vh,7rem)]">
+      {/* The lift that puts the dots on the same line as the standing facts.
+            Measured once against that row; both are anchored to the bottom, so
+            it holds as the window changes height. */}
+        <div className="mb-[4.125rem] flex flex-col items-center gap-[clamp(5rem,9vh,7rem)]">
         <div className="relative w-[clamp(15rem,22vw,21rem)]" style={{ aspectRatio: "4 / 5" }}>
           {themes.map((theme, index) => {
             /* Signed distance, wrapped, so the arrangement after the current

@@ -1,6 +1,8 @@
 import "server-only";
 import { cache } from "react";
 import { draftMode } from "next/headers";
+import { isUnlocked } from "@/lib/unlocked";
+import { redact } from "@/lib/redact";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import type {
@@ -120,13 +122,31 @@ export const getNavigation = cache(async (): Promise<NavItem[]> => {
 
 export const getSocials = cache(async (): Promise<Social[]> => {
   const settings = await getSettings();
-  return (settings.socials ?? []).map((social) => ({
-    label: social.label,
-    href: social.href,
-    handle: social.handle ?? undefined,
-    platform: social.platform ?? "website",
-    external: !social.href.startsWith("/"),
-  }));
+  const settings2 = await getSettings();
+  const unlocked = settings2.demoMode === true || (await isUnlocked());
+
+  /* A private link is dropped, not disabled: the handle and the URL are both
+     the thing being protected, and a disabled anchor still carries its href. */
+  return (settings.socials ?? [])
+    .filter((social) => unlocked || social.private !== true)
+    .map((social) => ({
+      label: social.label,
+      href: social.href,
+      handle: social.handle ?? undefined,
+      platform: social.platform ?? "website",
+      external: !social.href.startsWith("/"),
+    }));
+});
+
+/** How many links a visitor without a grant is not being shown. */
+export const getPrivateSocialCount = cache(async (): Promise<number> => {
+  const settings = await getSettings();
+  /* Nothing is being withheld on the demonstration — every link is shown — so
+     a line offering more of them in exchange for a code would be describing a
+     page that is not this one. */
+  if (settings.demoMode === true) return 0;
+  if (await isUnlocked()) return 0;
+  return (settings.socials ?? []).filter((social) => social.private === true).length;
 });
 
 /* -------------------------------------------------------------------- home */
@@ -198,9 +218,65 @@ export const getCollage = cache(async (): Promise<CollageView> => {
 /* ---------------------------------------------------------- about / resume */
 
 /** Depth 1 so the portrait arrives as a Media document rather than its id. */
-export const getResume = cache(async (): Promise<ResumeDoc> => {
+/**
+ * The resume, with the private strings swapped for others of the same shape.
+ *
+ * Swapped rather than removed, and swapped one string at a time, so the page
+ * renders through exactly the same components in exactly the same grid: three
+ * jobs are still three jobs, a two-line summary is still two lines, and an
+ * employer of eleven letters still wraps where it wrapped. Nothing about the
+ * layout is a special case for being locked — the difference is that some of
+ * the words are not the words.
+ *
+ * The real strings never leave the server. What is sent is the substitute, and
+ * the page blurs it, which is a statement about reading rather than about
+ * security: there is nothing underneath the blur to uncover.
+ *
+ * Projects are not touched. They were covered at first and it was the wrong
+ * call: the work is the part worth showing, and a page that hides it is a page
+ * with nothing on it for anyone who has not been sent a code.
+ */
+export type ResumeView = ResumeDoc & {
+  /** False when the private strings have been substituted. */
+  unlocked: boolean;
+  /** True on the demonstration, where nothing is withheld and the covering is
+      a switch rather than a wall. */
+  demo?: boolean;
+};
+
+export const getResume = cache(async (): Promise<ResumeView> => {
   const payload = await client();
-  return payload.findGlobal({ slug: "resume", depth: 1, draft: await isDraft() });
+  const doc = await payload.findGlobal({ slug: "resume", depth: 1, draft: await isDraft() });
+
+  /* A demonstration has nothing to protect: the writing in it is invented and
+     the name is a placeholder. So it ships whole, and the covering becomes
+     something a visitor can switch on to see how it works — which is the only
+     honest way to show a feature whose entire job is to withhold. */
+  const settings = await getSettings();
+  if (settings.demoMode === true) return { ...doc, unlocked: true, demo: true };
+
+  if (await isUnlocked()) return { ...doc, unlocked: true };
+
+  type Entries = NonNullable<ResumeDoc["experience"]>;
+  const cover = (entries: Entries | null | undefined): Entries =>
+    (entries ?? []).map((entry) => ({
+      ...entry,
+      organisation: redact(entry.organisation),
+      role: redact(entry.role),
+      location: entry.location ? redact(entry.location) : entry.location,
+      start: entry.start ? redact(entry.start) : entry.start,
+      end: entry.end ? redact(entry.end) : entry.end,
+      body: (entry.body ?? []).map((line) => ({ ...line, text: redact(line.text) })),
+      highlights: (entry.highlights ?? []).map((line) => ({ ...line, text: redact(line.text) })),
+    }));
+
+  return {
+    ...doc,
+    legalName: redact(doc.legalName),
+    experience: cover(doc.experience),
+    education: cover(doc.education),
+    unlocked: false,
+  };
 });
 
 /* ------------------------------------------------------------------- work */

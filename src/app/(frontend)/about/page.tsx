@@ -1,16 +1,29 @@
 import type { Metadata } from "next";
-import { getResume, getHome, getSettings, getSocials, toMedia } from "@/lib/cms";
+import {
+  getResume,
+  getHome,
+  getSettings,
+  getSocials,
+  getPrivateSocialCount,
+  toMedia,
+} from "@/lib/cms";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/motion/Reveal";
 import { ArrowLink } from "@/components/ui/ArrowLink";
 import { MediaFrame } from "@/components/ui/MediaFrame";
 import { SocialIcon, SocialRow } from "@/components/ui/SocialIcon";
 import { PrintButton } from "@/components/resume/PrintButton";
+import { Covered } from "@/components/resume/Covered";
+import { AccessDialog } from "@/components/resume/AccessDialog";
+import { AccessPrompt } from "@/components/resume/AccessPrompt";
+import { LockAgain } from "@/components/resume/LockAgain";
+import { DemoSwitch } from "@/components/resume/DemoSwitch";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [resume, home] = await Promise.all([getResume(), getHome()]);
   return {
     title: "About Me",
+    // home.name is the public name. The legal one must not reach a meta tag.
     description: `${home.name} — ${resume.title}. Introduction, experience, education, projects and skills.`,
   };
 }
@@ -56,7 +69,7 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-function EntryRow({ entry }: { entry: Entry }) {
+function EntryRow({ entry, locked, demo }: { entry: Entry; locked: boolean; demo: boolean }) {
   const period = entry.current
     ? `${entry.start ?? ""} — Now`
     : [entry.start, entry.end].filter(Boolean).join(" — ");
@@ -64,15 +77,31 @@ function EntryRow({ entry }: { entry: Entry }) {
   return (
     <Reveal as="article" className="grid-12 gap-y-3 border-b border-rule pb-8 last:border-0">
       <div className="col-span-4 md:col-span-6 lg:col-span-3">
-        <h3 className="text-title font-medium">{entry.organisation}</h3>
-        {entry.location ? <p className="meta mt-2 text-muted">{entry.location}</p> : null}
+        <h3 className="text-title font-medium">
+          <Covered.Maybe locked={locked} demo={demo} label="Organisation">
+            {entry.organisation}
+          </Covered.Maybe>
+        </h3>
+        {entry.location ? (
+          <p className="meta mt-2 text-muted">
+            <Covered.Maybe locked={locked} demo={demo} label="Location">
+              {entry.location}
+            </Covered.Maybe>
+          </p>
+        ) : null}
       </div>
 
       <div className="col-span-4 md:col-span-6 lg:col-span-7">
-        <p className="text-small font-medium">{entry.role}</p>
+        <p className="text-small font-medium">
+          <Covered.Maybe locked={locked} demo={demo} label="Role">
+            {entry.role}
+          </Covered.Maybe>
+        </p>
         {(entry.body ?? []).map((paragraph) => (
           <p key={paragraph.text} className="mt-3 max-w-[62ch] text-small pretty text-muted">
-            {paragraph.text}
+            <Covered.Maybe locked={locked} demo={demo} label="Summary">
+              {paragraph.text}
+            </Covered.Maybe>
           </p>
         ))}
         {(entry.highlights ?? []).length > 0 ? (
@@ -80,7 +109,11 @@ function EntryRow({ entry }: { entry: Entry }) {
             {(entry.highlights ?? []).map((highlight) => (
               <li key={highlight.text} className="flex gap-3 text-small pretty text-muted">
                 <span aria-hidden="true">—</span>
-                <span>{highlight.text}</span>
+                <span className="flex-1">
+                  <Covered.Maybe locked={locked} demo={demo} label="Detail">
+                    {highlight.text}
+                  </Covered.Maybe>
+                </span>
               </li>
             ))}
           </ul>
@@ -89,7 +122,9 @@ function EntryRow({ entry }: { entry: Entry }) {
 
       {period ? (
         <p className="meta col-span-4 text-muted md:col-span-6 lg:col-span-2 lg:justify-self-end">
-          {period}
+          <Covered.Maybe locked={locked} demo={demo} label="Dates">
+            {period}
+          </Covered.Maybe>
         </p>
       ) : null}
     </Reveal>
@@ -97,11 +132,12 @@ function EntryRow({ entry }: { entry: Entry }) {
 }
 
 export default async function AboutPage() {
-  const [resume, home, settings, socials] = await Promise.all([
+  const [resume, home, settings, socials, privateSocials] = await Promise.all([
     getResume(),
     getHome(),
     getSettings(),
     getSocials(),
+    getPrivateSocialCount(),
   ]);
   const portrait = toMedia(resume.portrait, `${home.name} — portrait`);
 
@@ -122,6 +158,7 @@ export default async function AboutPage() {
     <div className="shell pt-10 md:pt-16" data-resume>
       {/* 00, not 05: this is the preface to the numbered sections, not another
           one of them. */}
+      {!resume.unlocked || resume.demo ? <AccessDialog demo={resume.demo === true} /> : null}
       <SectionHeader index="00" label="About Me" />
 
       {/* The masthead. Portrait and the standing facts on the left, the name and
@@ -148,7 +185,46 @@ export default async function AboutPage() {
         <div className={identity}>
           <div data-resume-name>
             <Reveal>
-              <h1 className="text-display font-medium">{home.name}</h1>
+              {/* A page needs a heading that can be read, so the public name
+                  stands in rather than a covered block — and the covered block
+                  goes beneath it, where it says what is being withheld. */}
+              {/* Two names, and which one is the heading depends on where
+                  this is being read. On screen the site's own name carries the
+                  page and the legal one sits beside it, small — covering a
+                  display-sized name leaves a smear where the page should open,
+                  which looks like damage. On paper it is the other way round:
+                  a CV is a formal document and the formal name is its title,
+                  so the pair swaps places. */}
+              <h1 className="text-display font-medium">
+                <span className="print:hidden">{home.name}</span>
+
+                {resume.legalName ? (
+                  <span className="text-title text-muted ml-3 align-baseline font-normal print:hidden">
+                    {resume.demo ? (
+                      <Covered.Maybe
+                        locked={false}
+                        demo
+                        label="Name"
+                        className="align-baseline"
+                      >
+                        {resume.legalName}
+                      </Covered.Maybe>
+                    ) : resume.unlocked ? (
+                      resume.legalName
+                    ) : (
+                      <Covered strength="light" align="baseline" label="Name">
+                        {resume.legalName}
+                      </Covered>
+                    )}
+                  </span>
+                ) : null}
+
+                {/* Paper only. Without a grant there is no legal name to put
+                    here, so the printed document keeps the public one. */}
+                <span className="hidden print:inline">
+                  {resume.unlocked && resume.legalName ? resume.legalName : home.name}
+                </span>
+              </h1>
               <p className="text-lead mt-3 text-muted">{resume.title}</p>
             </Reveal>
           </div>
@@ -202,6 +278,11 @@ export default async function AboutPage() {
                     <div className="border-t border-rule pt-5">
                       <p className="meta mb-4 text-muted">Elsewhere</p>
                       <SocialRow links={elsewhere} className="gap-x-6 gap-y-3" />
+                      {privateSocials > 0 ? (
+                        <p className="meta mt-3 text-muted" data-print="hide">
+                          {privateSocials} more with a code
+                        </p>
+                      ) : null}
                     </div>
                   </Reveal>
                 </div>
@@ -232,11 +313,18 @@ export default async function AboutPage() {
       ) : null}
 
       <div className="mt-[clamp(3.5rem,10vh,7rem)] max-w-[1200px]" data-resume-body>
+        {/* The same rows either way. Locked, the words in them were swapped
+            on the server for others of the same shape, and the blur says so. */}
         {(resume.experience ?? []).length > 0 ? (
           <Block title="Experience">
             <div className="flex flex-col gap-8">
               {(resume.experience ?? []).map((entry, index) => (
-                <EntryRow key={`${entry.organisation}-${index}`} entry={entry as Entry} />
+                <EntryRow
+                  key={`${entry.organisation}-${index}`}
+                  entry={entry as Entry}
+                  locked={!resume.unlocked}
+                  demo={resume.demo === true}
+                />
               ))}
             </div>
           </Block>
@@ -246,7 +334,12 @@ export default async function AboutPage() {
           <Block title="Education">
             <div className="flex flex-col gap-8">
               {(resume.education ?? []).map((entry, index) => (
-                <EntryRow key={`${entry.organisation}-${index}`} entry={entry as Entry} />
+                <EntryRow
+                  key={`${entry.organisation}-${index}`}
+                  entry={entry as Entry}
+                  locked={!resume.unlocked}
+                  demo={resume.demo === true}
+                />
               ))}
             </div>
           </Block>
@@ -260,9 +353,9 @@ export default async function AboutPage() {
                   <h3 className="col-span-4 text-small font-medium md:col-span-6 lg:col-span-3">
                     {project.name}
                   </h3>
-                  <p className="col-span-4 max-w-[62ch] text-small text-muted md:col-span-6 lg:col-span-7">
-                    {project.body}
-                  </p>
+                  <div className="col-span-4 max-w-[62ch] md:col-span-6 lg:col-span-7">
+                    {project.body ? <p className="text-small text-muted">{project.body}</p> : null}
+                  </div>
                   {project.period ? (
                     <p className="meta col-span-4 text-muted md:col-span-6 lg:col-span-2 lg:justify-self-end">
                       {project.period}
@@ -331,6 +424,10 @@ export default async function AboutPage() {
           </Reveal>
           {resume.printNote ? <p className="meta mt-8 text-muted">{resume.printNote}</p> : null}
         </Block>
+
+        <div className="mt-[clamp(3rem,8vh,5rem)]">
+          {resume.demo ? <DemoSwitch /> : resume.unlocked ? <LockAgain /> : <AccessPrompt />}
+        </div>
       </div>
     </div>
   );
