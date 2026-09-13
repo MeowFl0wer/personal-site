@@ -1,0 +1,28 @@
+PHOTOGRAPHS, ILLUSTRATIONS AND WRITTEN CONTENT — ALL RIGHTS RESERVED
+
+Copyright (c) 2026 Euan (https://github.com/MeowFl0wer)
+
+The code in this repository is under the MIT licence; see LICENSE. This file
+covers everything that is not code, which is to say everything the site is
+actually about:
+
+  · the photographs in public/placeholder/ and anywhere else in this
+    repository, all taken by the author
+  · the cut-outs and illustrations made from them
+  · the written content in content/, and the text of the deployed site
+
+None of it is licensed. It is here because the code cannot be read or run
+without it, not because it is being given away.
+
+You may NOT, without written permission:
+
+  · use these photographs or illustrations on any site, product, printed work,
+    dataset or model, including as placeholder or example material
+  · redistribute them, on their own or as part of a fork
+  · alter them and use the result
+
+If you want to build on the code — which you are welcome to do — replace the
+contents of public/placeholder/ with your own pictures first. Running
+`npm run photos -- <your folder>` does exactly that, and is the intended path.
+
+Asking is fine and usually answered: open an issue on the repository.
