@@ -94,7 +94,7 @@ function Maybe({
   className,
   label,
   strength,
-  align,
+  align = "top",
 }: {
   locked: boolean;
   demo?: boolean;
@@ -109,7 +109,14 @@ function Maybe({
       <span
         data-demo-private
         data-demo-label={label}
-        className={cn("relative isolate inline-block max-w-full align-top", className)}
+        className={cn(
+          "relative isolate inline-block max-w-full",
+          // Same choice as the covered path. Left on align-top, a name beside a
+          // display-sized heading hangs off its cap height instead of sitting
+          // on the line, which is where it looked wrong on the demonstration.
+          align === "baseline" ? "align-baseline" : "align-top",
+          className,
+        )}
       >
         <span data-demo-text className="block">
           {children}

@@ -532,11 +532,23 @@ html[data-motion="off"] *::after {
     padding-top: 0 !important;
   }
 
-  /* The screen masthead is a portrait beside an introduction. On paper the
-     portrait is gone, so what is left has to close back up into a heading. */
+  /* The screen masthead is a portrait beside an introduction, and it stays
+     that way on paper — only tighter, and with the photograph small enough to
+     be a passport rather than a plate. */
   [data-resume-masthead] {
     margin-top: 4mm !important;
     row-gap: 4mm !important;
+    align-items: start !important;
+  }
+
+  [data-resume-portrait] {
+    grid-column: span 2 / span 2 !important;
+    max-width: 32mm;
+  }
+
+  [data-resume-portrait] img {
+    width: 100% !important;
+    height: auto !important;
   }
 
   [data-resume-name] h1 {
@@ -544,11 +556,13 @@ html[data-motion="off"] *::after {
     line-height: 1.05;
   }
 
-  /* The portrait is gone on paper, so nothing in the masthead should still be
-     sitting in the column it was given to make room for it — including the
-     nested facts/accounts grid, which otherwise keeps a third of the page and
-     breaks "Amsterdam, NL" across two lines. */
-  [data-resume-masthead] > *,
+  /* Everything in the masthead that is not the photograph takes the rest of
+     the width — including the nested facts/accounts grid, which otherwise
+     keeps a third of the page and breaks "Amsterdam, NL" across two lines. */
+  [data-resume-masthead] > *:not([data-resume-portrait]) {
+    grid-column: 3 / -1 !important;
+  }
+
   [data-resume-masthead] .grid-12 > * {
     grid-column: 1 / -1 !important;
   }
@@ -587,6 +601,24 @@ html[data-motion="off"] *::after {
 
   [data-resume-body] .flex.flex-col {
     gap: 3mm !important;
+  }
+
+  /* Four columns on paper, as on screen. Collapsed to one they ran down most
+     of a page for a list of single words, which is a poor use of a sheet and
+     makes the document look longer than it is.
+
+     Scoped to the skills grid by name, not to `.grid-12` inside the body: every
+     entry in the record is a .grid-12 too, and forcing four equal columns on
+     those squeezed each summary into a third of the width it had. */
+  [data-resume-skills] {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    column-gap: 6mm !important;
+    row-gap: 5mm !important;
+  }
+
+  [data-resume-skills] > * {
+    grid-column: auto !important;
   }
 
   /* Body copy prints at full contrast — grey-on-white does not photocopy. */
