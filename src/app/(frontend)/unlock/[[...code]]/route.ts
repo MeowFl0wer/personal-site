@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { redeem } from "@/lib/access";
+import { ACCESS_COOKIE } from "@/lib/unlocked";
 
 /**
  * Redeems an access code and sends the visitor back to the page.
@@ -54,6 +55,15 @@ export async function GET(request: NextRequest, context: { params: Promise<{ cod
      and an open redirect is how a phishing page borrows someone's domain. */
   const requested = request.nextUrl.searchParams.get("next") ?? "/about";
   const next = requested.startsWith("/") && !requested.startsWith("//") ? requested : "/about";
+
+  /* Giving it back. There has to be a way to stop being unlocked — to check
+     what a visitor sees, or to hand the laptop to someone. Clearing the cookie
+     is the whole of it: nothing else on the server remembers. */
+  if (request.nextUrl.searchParams.get("lock") !== null) {
+    const response = NextResponse.redirect(new URL(next, request.nextUrl.origin));
+    response.cookies.set({ name: ACCESS_COOKIE, value: "", expires: new Date(0), path: "/" });
+    return response;
+  }
 
   const address =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??

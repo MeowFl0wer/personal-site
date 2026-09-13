@@ -16,6 +16,7 @@ import { PrintButton } from "@/components/resume/PrintButton";
 import { Covered } from "@/components/resume/Covered";
 import { AccessDialog } from "@/components/resume/AccessDialog";
 import { AccessPrompt } from "@/components/resume/AccessPrompt";
+import { LockAgain } from "@/components/resume/LockAgain";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [resume, home] = await Promise.all([getResume(), getHome()]);
@@ -412,11 +413,9 @@ export default async function AboutPage() {
           {resume.printNote ? <p className="meta mt-8 text-muted">{resume.printNote}</p> : null}
         </Block>
 
-        {!resume.unlocked ? (
-          <div className="mt-[clamp(3rem,8vh,5rem)]">
-            <AccessPrompt />
-          </div>
-        ) : null}
+        <div className="mt-[clamp(3rem,8vh,5rem)]">
+          {resume.unlocked ? <LockAgain /> : <AccessPrompt />}
+        </div>
       </div>
     </div>
   );
