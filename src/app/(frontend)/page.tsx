@@ -1,4 +1,5 @@
 import { getCollage, getHome, getHomeSections, getSettings } from "@/lib/cms";
+import { DemoNoticeText } from "@/components/layout/DemoNotice";
 import { Hero } from "@/components/home/Hero";
 import { AboutIntro } from "@/components/home/AboutIntro";
 import { SelectedWork } from "@/components/home/SelectedWork";
@@ -73,6 +74,18 @@ export default async function HomePage() {
             return null;
         }
       })}
+
+      {/* The same words as the notice on arrival, for anyone who dismissed it
+          or who never saw it. It sits at the foot of the home page because
+          that is where someone ends up once they believe what they have read. */}
+      {settings.demoMode === true ? (
+        <section className="shell pb-[clamp(3rem,8vh,5rem)]" data-print="hide">
+          <div className="border-rule border-t pt-6">
+            <p className="meta text-muted mb-3">Demo · 项目演示</p>
+            <DemoNoticeText />
+          </div>
+        </section>
+      ) : null}
     </>
   );
 }

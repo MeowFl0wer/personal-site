@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { AccessForm } from "./AccessForm";
+import { DEMO_CODE } from "./DemoSwitch";
 
 /**
  * The prompt a covered passage opens.
@@ -36,7 +37,7 @@ function ReopenOnRefusal() {
   return null;
 }
 
-export function AccessDialog({ next = "/about" }: { next?: string }) {
+export function AccessDialog({ next = "/about", demo = false }: { next?: string; demo?: boolean }) {
   return (
     <dialog
       id={ACCESS_DIALOG_ID}
@@ -55,12 +56,24 @@ export function AccessDialog({ next = "/about" }: { next?: string }) {
         <div className="flex flex-col gap-2">
           <p className="meta text-muted">Private</p>
           <p className="text-small max-w-[34ch]">
-            This part is not public. If I have given you an access code, it goes here.
+            {demo
+              ? "A demonstration of the real thing. The code is on the page below."
+              : "This part is not public. If I have given you an access code, it goes here."}
           </p>
+          {demo ? (
+            <p className="text-small text-muted max-w-[34ch]">
+              演示：授权码就在下方说明处。
+            </p>
+          ) : null}
         </div>
 
+        {/* On the demonstration the code cannot be checked — there is no
+            server to check it against — so the form is a local one that simply
+            turns the switch back off. It is the same shape and the same
+            gesture; what it is not is a pretence of security. */}
         <AccessForm
           next={next}
+          demoCode={demo ? DEMO_CODE : undefined}
           onCancel={() => {
             const element = document.getElementById(ACCESS_DIALOG_ID);
             if (element instanceof HTMLDialogElement) element.close();

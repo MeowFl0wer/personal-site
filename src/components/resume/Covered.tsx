@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { LockButton } from "./LockButton";
+import { DemoLock } from "./DemoLock";
 
 /**
  * Marks one passage as not this reader's to read.
@@ -73,8 +74,22 @@ export function Covered({
   );
 }
 
+/**
+ * The same thing, for a passage that is only sometimes covered.
+ *
+ * Three states rather than two, because the demonstration needs a fourth way
+ * of being honest. On the real site a passage is either yours to read or it is
+ * not, and the server decides before anything is sent. On the demonstration
+ * there is nothing to withhold — the writing is invented — so the covering
+ * becomes a switch, and it has to work in a page with no server behind it.
+ *
+ * `demo` renders the passage plainly and marks it. A single attribute on
+ * <html>, set by the switch, is what blurs every marked passage at once; see
+ * globals.css. Nothing is hidden either way, and the demonstration says so.
+ */
 function Maybe({
   locked,
+  demo = false,
   children,
   className,
   label,
@@ -82,12 +97,29 @@ function Maybe({
   align,
 }: {
   locked: boolean;
+  demo?: boolean;
   children: React.ReactNode;
   className?: string;
   label?: string;
   strength?: keyof typeof STRENGTH;
   align?: "top" | "baseline";
 }) {
+  if (demo) {
+    return (
+      <span
+        data-demo-private
+        data-demo-label={label}
+        className={cn("relative isolate inline-block max-w-full align-top", className)}
+      >
+        <span data-demo-text className="block">
+          {children}
+        </span>
+        <span data-demo-rim aria-hidden="true" className="pointer-events-none absolute" />
+        <DemoLock label={label ?? "This"} />
+      </span>
+    );
+  }
+
   if (!locked) return <>{children}</>;
   return (
     <Covered className={cn("block", className)} label={label} strength={strength} align={align}>

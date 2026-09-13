@@ -17,6 +17,7 @@ import { Covered } from "@/components/resume/Covered";
 import { AccessDialog } from "@/components/resume/AccessDialog";
 import { AccessPrompt } from "@/components/resume/AccessPrompt";
 import { LockAgain } from "@/components/resume/LockAgain";
+import { DemoSwitch } from "@/components/resume/DemoSwitch";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [resume, home] = await Promise.all([getResume(), getHome()]);
@@ -68,7 +69,7 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-function EntryRow({ entry, locked }: { entry: Entry; locked: boolean }) {
+function EntryRow({ entry, locked, demo }: { entry: Entry; locked: boolean; demo: boolean }) {
   const period = entry.current
     ? `${entry.start ?? ""} — Now`
     : [entry.start, entry.end].filter(Boolean).join(" — ");
@@ -77,13 +78,13 @@ function EntryRow({ entry, locked }: { entry: Entry; locked: boolean }) {
     <Reveal as="article" className="grid-12 gap-y-3 border-b border-rule pb-8 last:border-0">
       <div className="col-span-4 md:col-span-6 lg:col-span-3">
         <h3 className="text-title font-medium">
-          <Covered.Maybe locked={locked} label="Organisation">
+          <Covered.Maybe locked={locked} demo={demo} label="Organisation">
             {entry.organisation}
           </Covered.Maybe>
         </h3>
         {entry.location ? (
           <p className="meta mt-2 text-muted">
-            <Covered.Maybe locked={locked} label="Location">
+            <Covered.Maybe locked={locked} demo={demo} label="Location">
               {entry.location}
             </Covered.Maybe>
           </p>
@@ -92,13 +93,13 @@ function EntryRow({ entry, locked }: { entry: Entry; locked: boolean }) {
 
       <div className="col-span-4 md:col-span-6 lg:col-span-7">
         <p className="text-small font-medium">
-          <Covered.Maybe locked={locked} label="Role">
+          <Covered.Maybe locked={locked} demo={demo} label="Role">
             {entry.role}
           </Covered.Maybe>
         </p>
         {(entry.body ?? []).map((paragraph) => (
           <p key={paragraph.text} className="mt-3 max-w-[62ch] text-small pretty text-muted">
-            <Covered.Maybe locked={locked} label="Summary">
+            <Covered.Maybe locked={locked} demo={demo} label="Summary">
               {paragraph.text}
             </Covered.Maybe>
           </p>
@@ -109,7 +110,7 @@ function EntryRow({ entry, locked }: { entry: Entry; locked: boolean }) {
               <li key={highlight.text} className="flex gap-3 text-small pretty text-muted">
                 <span aria-hidden="true">—</span>
                 <span className="flex-1">
-                  <Covered.Maybe locked={locked} label="Detail">
+                  <Covered.Maybe locked={locked} demo={demo} label="Detail">
                     {highlight.text}
                   </Covered.Maybe>
                 </span>
@@ -121,7 +122,7 @@ function EntryRow({ entry, locked }: { entry: Entry; locked: boolean }) {
 
       {period ? (
         <p className="meta col-span-4 text-muted md:col-span-6 lg:col-span-2 lg:justify-self-end">
-          <Covered.Maybe locked={locked} label="Dates">
+          <Covered.Maybe locked={locked} demo={demo} label="Dates">
             {period}
           </Covered.Maybe>
         </p>
@@ -157,7 +158,7 @@ export default async function AboutPage() {
     <div className="shell pt-10 md:pt-16" data-resume>
       {/* 00, not 05: this is the preface to the numbered sections, not another
           one of them. */}
-      {!resume.unlocked ? <AccessDialog /> : null}
+      {!resume.unlocked || resume.demo ? <AccessDialog demo={resume.demo === true} /> : null}
       <SectionHeader index="00" label="About Me" />
 
       {/* The masthead. Portrait and the standing facts on the left, the name and
@@ -199,7 +200,16 @@ export default async function AboutPage() {
 
                 {resume.legalName ? (
                   <span className="text-title text-muted ml-3 align-baseline font-normal print:hidden">
-                    {resume.unlocked ? (
+                    {resume.demo ? (
+                      <Covered.Maybe
+                        locked={false}
+                        demo
+                        label="Name"
+                        className="align-baseline"
+                      >
+                        {resume.legalName}
+                      </Covered.Maybe>
+                    ) : resume.unlocked ? (
                       resume.legalName
                     ) : (
                       <Covered strength="light" align="baseline" label="Name">
@@ -313,6 +323,7 @@ export default async function AboutPage() {
                   key={`${entry.organisation}-${index}`}
                   entry={entry as Entry}
                   locked={!resume.unlocked}
+                  demo={resume.demo === true}
                 />
               ))}
             </div>
@@ -327,6 +338,7 @@ export default async function AboutPage() {
                   key={`${entry.organisation}-${index}`}
                   entry={entry as Entry}
                   locked={!resume.unlocked}
+                  demo={resume.demo === true}
                 />
               ))}
             </div>
@@ -414,7 +426,7 @@ export default async function AboutPage() {
         </Block>
 
         <div className="mt-[clamp(3rem,8vh,5rem)]">
-          {resume.unlocked ? <LockAgain /> : <AccessPrompt />}
+          {resume.demo ? <DemoSwitch /> : resume.unlocked ? <LockAgain /> : <AccessPrompt />}
         </div>
       </div>
     </div>

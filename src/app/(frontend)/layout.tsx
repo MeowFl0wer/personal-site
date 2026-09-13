@@ -13,6 +13,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Footer } from "@/components/layout/Footer";
 import { PreviewBanner } from "@/components/layout/PreviewBanner";
 import { CollageGround } from "@/components/home/CollageGround";
+import { DemoNotice } from "@/components/layout/DemoNotice";
 import { AccentTheme } from "@/components/layout/AccentTheme";
 
 /** SEO comes from Site Settings, so the title is editable without a deploy. */
@@ -83,6 +84,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
             </a>
 
             {preview ? <PreviewBanner /> : null}
+            {settings.demoMode === true ? <DemoNotice /> : null}
 
             <Cursor />
             <Navigation name={home.name} items={navigation} />

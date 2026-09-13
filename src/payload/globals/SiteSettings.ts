@@ -37,6 +37,14 @@ export const SiteSettings: GlobalConfig = {
             },
             { name: "email", type: "email", required: true },
             {
+              name: "demoMode",
+              type: "checkbox",
+              admin: {
+                description:
+                  "This copy of the site is a demonstration. Adds a notice that the writing is invented, replaces the private half of About with a switch anyone can try, and is what the GitHub Pages preview runs on. Off on the real site.",
+              },
+            },
+            {
               name: "accentColor",
               type: "select",
               defaultValue: "harbor",

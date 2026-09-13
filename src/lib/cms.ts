@@ -122,7 +122,8 @@ export const getNavigation = cache(async (): Promise<NavItem[]> => {
 
 export const getSocials = cache(async (): Promise<Social[]> => {
   const settings = await getSettings();
-  const unlocked = await isUnlocked();
+  const settings2 = await getSettings();
+  const unlocked = settings2.demoMode === true || (await isUnlocked());
 
   /* A private link is dropped, not disabled: the handle and the URL are both
      the thing being protected, and a disabled anchor still carries its href. */
@@ -139,8 +140,12 @@ export const getSocials = cache(async (): Promise<Social[]> => {
 
 /** How many links a visitor without a grant is not being shown. */
 export const getPrivateSocialCount = cache(async (): Promise<number> => {
-  if (await isUnlocked()) return 0;
   const settings = await getSettings();
+  /* Nothing is being withheld on the demonstration — every link is shown — so
+     a line offering more of them in exchange for a code would be describing a
+     page that is not this one. */
+  if (settings.demoMode === true) return 0;
+  if (await isUnlocked()) return 0;
   return (settings.socials ?? []).filter((social) => social.private === true).length;
 });
 
@@ -234,11 +239,21 @@ export const getCollage = cache(async (): Promise<CollageView> => {
 export type ResumeView = ResumeDoc & {
   /** False when the private strings have been substituted. */
   unlocked: boolean;
+  /** True on the demonstration, where nothing is withheld and the covering is
+      a switch rather than a wall. */
+  demo?: boolean;
 };
 
 export const getResume = cache(async (): Promise<ResumeView> => {
   const payload = await client();
   const doc = await payload.findGlobal({ slug: "resume", depth: 1, draft: await isDraft() });
+
+  /* A demonstration has nothing to protect: the writing in it is invented and
+     the name is a placeholder. So it ships whole, and the covering becomes
+     something a visitor can switch on to see how it works — which is the only
+     honest way to show a feature whose entire job is to withhold. */
+  const settings = await getSettings();
+  if (settings.demoMode === true) return { ...doc, unlocked: true, demo: true };
 
   if (await isUnlocked()) return { ...doc, unlocked: true };
 

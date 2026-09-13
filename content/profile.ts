@@ -10,7 +10,7 @@ export const profile: Profile = {
      is Resume.legalName, which is private — see /about. */
   name: "Euan",
   shortName: "Euan",
-  greeting: "Hi, I'm Your Name 👋",
+  greeting: "Hi, I'm Euan 👋",
   /** Hero lines. Keep each under ~15 characters — see --text-hero in globals.css. */
   headline: ["Developer,", "builder,", "traveler,", "and occasional", "photographer."],
   roles: ["Developer", "Builder", "Photographer"],

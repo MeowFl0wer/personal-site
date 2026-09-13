@@ -2060,6 +2060,10 @@ export interface SiteSetting {
   siteUrl?: string | null;
   email: string;
   /**
+   * This copy of the site is a demonstration. Adds a notice that the writing is invented, replaces the private half of About with a switch anyone can try, and is what the GitHub Pages preview runs on. Off on the real site.
+   */
+  demoMode?: boolean | null;
+  /**
    * The single accent tone. Chosen from the palette rather than picked freely, so it always sits correctly against the ground wash.
    */
   accentColor?: ('harbor' | 'clay' | 'ink' | 'moss' | 'slate' | 'ochre') | null;
@@ -2361,6 +2365,7 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   siteName?: T;
   siteUrl?: T;
   email?: T;
+  demoMode?: T;
   accentColor?: T;
   seoTitle?: T;
   seoDescription?: T;

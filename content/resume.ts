@@ -10,7 +10,11 @@ import { profile } from "./profile";
  * should be.
  */
 export const resume: Resume = {
-  /** The name on the documents. Private — see the About global. */
+  /* The name on the documents, and the one thing on this page that must not
+     be in the repository — a public seed file is a worse place to keep a legal
+     name than any web page, because no access code stands in front of it. The
+     real one is typed into /admin on the server, where it lives in a database
+     that is not committed. What is here is what the preview shows. */
   legalName: "[Real name]",
   title: "Developer / Interface Engineer",
   portrait: {

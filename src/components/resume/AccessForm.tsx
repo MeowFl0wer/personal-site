@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -38,14 +38,44 @@ export function AccessForm({
   next = "/about",
   onCancel,
   className,
+  demoCode,
 }: {
   next?: string;
   /** Only the dialog has somewhere to go back to. */
   onCancel?: () => void;
   className?: string;
+  /** Set on the demonstration, where there is no server to check a code
+      against and the form simply turns the switch off. */
+  demoCode?: string;
 }) {
+  const [refused, setRefused] = useState(false);
+
+  const onDemoSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    if (!demoCode) return;
+    event.preventDefault();
+    const typed = new FormData(event.currentTarget).get("code");
+    if (String(typed ?? "").trim().toUpperCase() !== demoCode.toUpperCase()) {
+      setRefused(true);
+      return;
+    }
+    document.documentElement.dataset.demoMask = "off";
+    try {
+      window.localStorage.setItem("demo-mask", "off");
+    } catch {
+      // Private windows throw; the switch still applies to this page.
+    }
+    document.querySelectorAll("dialog[open]").forEach((element) => {
+      if (element instanceof HTMLDialogElement) element.close();
+    });
+  };
+
   return (
-    <form method="get" action="/unlock" className={cn("flex flex-col gap-4", className)}>
+    <form
+      method="get"
+      action="/unlock"
+      onSubmit={demoCode ? onDemoSubmit : undefined}
+      className={cn("flex flex-col gap-4", className)}
+    >
       <input type="hidden" name="next" value={next} />
 
       <input
@@ -66,9 +96,17 @@ export function AccessForm({
 
       {/* useSearchParams opts its subtree out of the static render; without the
           boundary the whole page would be dragged dynamic with it. */}
-      <Suspense fallback={null}>
-        <Message />
-      </Suspense>
+      {demoCode ? (
+        refused ? (
+          <p className="text-small text-accent" role="alert">
+            Not the demo code. It is on the page below.
+          </p>
+        ) : null
+      ) : (
+        <Suspense fallback={null}>
+          <Message />
+        </Suspense>
+      )}
 
       <div className="mt-1 flex items-center justify-end gap-2">
         {onCancel ? (
