@@ -119,12 +119,22 @@ jobs:
             exit 1
           fi
 
-          # Afterwards `migrate` must be a no-op that asks nothing.
-          if DATABASE_URI=file:./data/baseline-check.db npm run migrate < /dev/null \
-              | grep -qi "data loss"; then
-            echo "::error::still prompting about data loss after baselining"
+          # Afterwards `migrate` must be a no-op that asks nothing. Two
+          # assertions, not one: piping straight into grep hands the pipeline
+          # grep's exit status, so a `migrate` that failed without printing
+          # "data loss" would have passed this silently.
+          if ! DATABASE_URI=file:./data/baseline-check.db \
+              npm run migrate < /dev/null > migrate-after-baseline.log 2>&1; then
+            echo "::error::migrate failed after baselining"
+            cat migrate-after-baseline.log
             exit 1
           fi
+          if grep -qi "data loss" migrate-after-baseline.log; then
+            echo "::error::still prompting about data loss after baselining"
+            cat migrate-after-baseline.log
+            exit 1
+          fi
+          rm -f migrate-after-baseline.log
 
           # A schema that does not match must be refused rather than recorded.
           cp data/site.db data/baseline-bad.db
