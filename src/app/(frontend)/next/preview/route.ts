@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import type { NextRequest } from "next/server";
 import { getPayload } from "payload";
 import config from "@payload-config";
-import { PREVIEW_SECRET } from "@/payload/preview";
+import { previewSecret } from "@/payload/preview";
 
 /**
  * Draft preview entry point.
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   const secret = searchParams.get("secret");
   const path = searchParams.get("path") ?? "/";
 
-  if (secret !== PREVIEW_SECRET) {
+  if (secret !== previewSecret()) {
     return new Response("Invalid preview secret", { status: 401 });
   }
 

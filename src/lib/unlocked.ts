@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { requiredSecret } from "@/lib/secrets";
 
 /**
  * Whether this request may read the private half of /about.
@@ -17,8 +18,16 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const ACCESS_COOKIE = "about-access";
 
+/**
+ * The key is read per call rather than at module load, for the same reason the
+ * preview secret is: this module is imported by the Payload config, which is
+ * imported by scripts that have no business demanding a signing key. Nothing
+ * here signs anything until a request actually arrives with a cookie.
+ */
 const sign = (value: string) =>
-  createHmac("sha256", process.env.PAYLOAD_SECRET ?? "").update(value).digest("base64url");
+  createHmac("sha256", requiredSecret("PAYLOAD_SECRET", "development-only-payload-secret"))
+    .update(value)
+    .digest("base64url");
 
 export const seal = (grantId: string, expiresAt: number) => {
   const body = `${grantId}.${expiresAt}`;
