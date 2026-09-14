@@ -162,18 +162,76 @@ two outputs. The portrait is the only thing the print version drops.
 
 The site and the admin are one Next.js app, so it is one deploy.
 
-**Database.** SQLite by default (`data/site.db`) — fine on a VPS or in Docker with a
-persistent volume. On a serverless host, point `DATABASE_URI` at a hosted libSQL/Turso
-database and set `DATABASE_AUTH_TOKEN`. No code change.
+### The first run, in order
 
-**Media.** Local disk is development only — files written to the container do not survive
-a redeploy on most hosts. Set `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`,
-`S3_ENDPOINT` and `S3_PUBLIC_URL` and every upload goes to S3-compatible object storage
-(Cloudflare R2, Backblaze B2, AWS S3) instead. Again, no code change — uploads are
-addressed through Payload, never by path.
+```bash
+npm ci
+npm run build
+npm run migrate                 # creates the schema — see below
+npm run seed                    # first deploy only; creates the owner + starter content
+npm start
+```
 
-**Publishing.** Pressing Publish revalidates the affected pages. No build, no deploy, no
-commit.
+**`npm run migrate` is not optional, and it is the step that is easy to miss.**
+In development the SQLite adapter pushes schema changes straight into the file, so
+nothing ever asks you to think about migrations. In production that is off —
+`push: false` — and a database nobody has migrated has no tables at all. The
+symptom is not a helpful error at startup; it is the site coming up and then
+answering `500` with `SQLITE_ERROR: no such table: site_settings` on the first
+request. Mounting an empty persistent volume is not enough on its own.
+
+Migrations live in `src/migrations/` and are committed. **After any change to a
+collection, a global or a field, generate one and commit it with the change:**
+
+```bash
+npm run migrate:create some_name_for_it
+npm run migrate:status          # what has and has not been applied
+```
+
+### Environment
+
+`PAYLOAD_SECRET` and `PREVIEW_SECRET` have no fallback in production — see
+[.env.example](./.env.example), which says which one stops the process and which
+one only breaks the Preview button.
+
+**`PAYLOAD_SECRET` cannot be rotated casually.** It signs admin sessions *and* the
+cookie that unlocks the private half of `/about`, so changing it signs everyone out
+and invalidates every access code already in someone's hands.
+
+### Database
+
+SQLite by default (`data/site.db`) — fine on a VPS or in Docker **with a persistent
+volume**. On a serverless host, point `DATABASE_URI` at a hosted libSQL/Turso database
+and set `DATABASE_AUTH_TOKEN`. No code change. Back up by copying the file.
+
+### Media
+
+Local disk is development only — uploads written next to the app do not survive a
+redeploy on most hosts. Setting `S3_BUCKET`, `S3_ACCESS_KEY_ID` and
+`S3_SECRET_ACCESS_KEY` moves every upload to S3-compatible object storage (Cloudflare
+R2, Backblaze B2, AWS S3); `S3_ENDPOINT`, `S3_REGION` and `S3_PUBLIC_URL` are covered
+in `.env.example`, including which of them the storage plugin never sees. No code
+change either way — uploads are addressed through Payload, never by path.
+
+### Behind a reverse proxy
+
+**The proxy must set `x-forwarded-for` itself, replacing whatever the client sent.**
+The unlock endpoint rate-limits on that header. A proxy that passes the client's own
+value through lets the limit be sidestepped; a proxy that sets nothing at all puts
+every visitor in one bucket, where three wrong codes from anyone locks out everyone
+for a minute. There is a server-wide ceiling behind the per-address one either way,
+so this is not the only thing standing there — but it is the one that is supposed to
+work.
+
+TLS and the http → https redirect belong to the proxy. The app sends HSTS itself; see
+`headers()` in [next.config.ts](./next.config.ts) and check the `includeSubDomains` on
+it suits the domain before going live.
+
+### Publishing
+
+Pressing Publish writes the change and revalidates the affected paths. Every route is
+currently rendered per request, so an edit is visible immediately regardless — the
+revalidation is there for when that stops being true. No build, no deploy, no commit.
 
 ---
 
