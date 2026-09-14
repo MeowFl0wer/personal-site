@@ -137,6 +137,26 @@ jobs:
           rm -f data/baseline-check.db data/baseline-bad.db data/*.before-baseline-*
           echo "Baselining accepts a dev-push database and refuses a damaged one."
 
+      - name: Build the server target
+        # The one the deploy workflow never touches: /admin, /api, draft mode
+        # and the redirects all exist here and in no other build.
+        run: npm run build
+
+      - name: Build the static export
+        run: npm run build:static
+
+      - name: The export must not contain the CMS
+        # Cheap, and it is the invariant the whole two-deployments arrangement
+        # rests on. Counts are deliberately not asserted — a new page is not a
+        # regression, and a check that fails every time a page is added is a
+        # check that gets deleted.
+        run: |
+          test -f out/index.html   || { echo "::error::no out/index.html"; exit 1; }
+          test -f out/.nojekyll    || { echo "::error::no out/.nojekyll"; exit 1; }
+          test ! -d out/admin      || { echo "::error::/admin was exported"; exit 1; }
+          test ! -d out/api        || { echo "::error::/api was exported"; exit 1; }
+          echo "Exported $(find out -name index.html | wc -l) pages, no CMS among them."
+
       - name: The working tree must be as the build found it
         # build-static moves the server-only routes aside, flips the demo flag
         # and copies the media library into public/, and puts all three back.
