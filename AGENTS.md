@@ -56,6 +56,17 @@ Every one so far had an answer outside it — see the reasoning in the header of
   the database behind it, so a warm one re-serves stale media URLs.
 - **Pages must already exist.** `enablement: true` cannot create it — the
   workflow token is refused. It was enabled once, by hand.
+- **Payload's Local API defaults to `overrideAccess: true`.** So a `find` that
+  looks like it respects `access.read` does not, and the access control in
+  `payload/access.ts` sat there as dead code while unpublished drafts rendered
+  on the public site. `draft: false` is not a substitute — it picks which
+  version to return, not which documents the reader may see. Every read in
+  `lib/cms.ts` passes `overrideAccess: false` and a user; keep it that way.
+- **`next/image` fetches the source without cookies.** The optimizer builds its
+  internal request from scratch — url, method, socket, no headers — so Payload
+  sees an anonymous reader and refuses anything marked private. It fails closed,
+  which hides the problem: the file is not leaked, it is simply invisible to the
+  person holding a valid grant too. Private uploads are served `unoptimized`.
 
 ## Before saying the server build is unaffected
 
