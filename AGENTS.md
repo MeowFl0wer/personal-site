@@ -14,7 +14,7 @@ This repo is deployed twice, and only one of them runs a server.
 
 | | Preview | Real site |
 | --- | --- | --- |
-| Where | GitHub Pages — `meowfl0wer.github.io/personal-site`, later `demov1.euan.im` | own server, not yet set up |
+| Where | GitHub Pages — `demov1.euan.im` (the project URL redirects there) | own server, not yet set up |
 | What ships | a folder of static HTML, CSS, JS, images | the Next app with Payload inside it |
 | Runtime deps | none | SQLite/libSQL, Payload, Node |
 | `/admin`, `/api`, draft mode, `redirects` | not built | as normal |

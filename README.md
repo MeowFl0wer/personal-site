@@ -46,6 +46,12 @@ SEED_PASSWORD=           # change it in the admin after first sign-in
 | `npm run generate:types` | Regenerate `src/payload-types.ts` after a schema change |
 | `npm run generate:importmap` | Regenerate the admin import map after adding an admin component |
 | `npm run lint` | ESLint |
+| `npm run build:static` | Build the GitHub Pages preview into `out/` — see [below](#the-github-pages-preview) |
+| `npm run preview:static` | Serve `out/` on :4000, to check the preview before pushing |
+| `npm run photos` | Import a directory of photographs into the gallery |
+| `npm run collage` | Import a directory of cut-outs for the home page collage |
+| `npm run collage:save` | Write the current collage arrangement back to `content/` |
+| `npm run payload` | Payload's own CLI |
 
 ---
 
@@ -230,7 +236,9 @@ which is what the workflow's `base_path` input is for.
 
 ### Where it publishes
 
-Today, the project URL: **https://meowfl0wer.github.io/personal-site/**
+**<https://demov1.euan.im>** — a custom domain at its own root, which is why
+`BASE_PATH` is empty in the workflow and `PAGES_CNAME` is set. The bare project URL,
+`meowfl0wer.github.io/personal-site`, redirects here.
 
 Pages has to be enabled once before the workflow can deploy — the workflow token is not
 allowed to create the site itself, whatever `permissions` says. Already done for this repo;
@@ -240,14 +248,18 @@ a fork needs `Settings → Pages → Source: GitHub Actions`, or:
 gh api repos/OWNER/REPO/pages -X POST -f build_type=workflow
 ```
 
-To move it to **demov1.euan.im**:
+To go back to the bare project URL, set `BASE_PATH: '/personal-site'` and
+`PAGES_CNAME: ''` in the workflow. Those two change **together**. A CNAME published for a
+name that does not resolve takes the preview offline, and a base path left set would
+prefix every URL on a domain that has no such directory.
 
-1. Add a DNS `CNAME` for `demov1` → `MeowFl0wer.github.io`, and wait for it to resolve.
-2. In the workflow, set `BASE_PATH: ''` and `PAGES_CNAME: 'demov1.euan.im'`.
-
-Those two change **together**. A CNAME published for a name that does not resolve yet takes
-the preview offline, and a base path left set would prefix every URL on a domain that has
-no such directory.
+**"Enforce HTTPS" in the Pages settings is greyed out, and that is expected.** The
+domain resolves to Cloudflare, not to GitHub, so GitHub cannot validate it and cannot
+issue a certificate for it. Visitors still get TLS — Cloudflare's, valid for
+`*.euan.im`. What that arrangement does not give you is the http → https redirect;
+that switch is *Always Use HTTPS*, in Cloudflare, not here. Turning GitHub's own
+enforcement back on would mean pointing the record at GitHub directly, which is a
+choice about who serves the preview, not a checkbox.
 
 ---
 
