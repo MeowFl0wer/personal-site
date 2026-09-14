@@ -199,17 +199,34 @@ starts by creating tables that already exist.
 **Do not answer yes to that prompt.** Say what is already true instead:
 
 ```bash
-cp data/site.db data/site.db.backup     # it takes a backup too; take your own
+# Stop anything writing to the database first — the dev server, a running
+# `npm start`. This takes its own backup, but a copy nothing is holding open
+# is a better backup.
+cp data/site.db data/site.db.backup
 npm run migrate:baseline
 ```
 
-It checks that all 188 tables the initial migration creates are actually present,
-refuses if any are missing, and then records that migration as applied without
-running it. After that this database is an ordinary migrated database: `npm run
-migrate` reports nothing to do, and the next migration you write applies to it
-normally. Verified both ways on a copy before this was written.
+It does not take your word for it. It runs the initial migration against an
+empty temporary file and compares this database to the result — every table,
+and for each one the columns, types, defaults, primary keys, foreign keys and
+indexes. Anything that does not match is named and the whole thing refuses,
+because recording a migration as applied when it has not been is worse than the
+problem: every later migration would then run against a schema nobody checked.
 
-It is a one-off. Running it twice refuses.
+The comparison ignores the physical order of columns, which differs between a
+database grown by dev pushes and one built in a single migration and means
+nothing.
+
+It also insists on finding exactly the marker a dev push leaves — one row,
+`dev`, batch `-1`. A migration table in any other state is a history it cannot
+work out, so it stops rather than guess.
+
+If everything matches it takes a timestamped backup and records the migration as
+applied, in one transaction, without running any of its DDL. After that this is
+an ordinary migrated database: `npm run migrate` reports nothing to do, and the
+next migration you write applies normally.
+
+It is a one-off, and running it twice refuses.
 
 ### Every change after that
 
@@ -256,9 +273,23 @@ for a minute. There is a server-wide ceiling behind the per-address one either w
 so this is not the only thing standing there — but it is the one that is supposed to
 work.
 
-TLS and the http → https redirect belong to the proxy. The app sends HSTS itself; see
-`headers()` in [next.config.ts](./next.config.ts) and check the `includeSubDomains` on
-it suits the domain before going live.
+TLS and the http → https redirect belong to the proxy. The app sends HSTS itself —
+see `headers()` in [next.config.ts](./next.config.ts) — with `includeSubDomains` and a
+two-year `max-age`, which is a commitment worth understanding before it ships:
+
+- It binds **every** subdomain, at every depth, for two years, whether or not that
+  subdomain exists yet. A browser that has seen it will refuse plain HTTP to
+  `anything.euan.im` with no way to click through.
+- Cloudflare's certificate for this zone covers `euan.im` and `*.euan.im` — the root
+  and one level of subdomain. A **deeper** name like `a.b.euan.im` is not covered by
+  it and would need a certificate of its own before it could answer at all.
+- Removing the header later does not undo it. Browsers keep the rule until it
+  expires; the only retraction is serving `max-age=0` and waiting for every visitor
+  to come back.
+
+It is deliberate here: the real site is the zone root, everything deployed under it
+is behind Cloudflare and therefore already on HTTPS. Setting it at the proxy instead
+is equally valid — just do not set it in both places with different values.
 
 ### Publishing
 
