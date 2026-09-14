@@ -244,7 +244,7 @@ times. That is all that is recorded — no addresses, no browser fingerprints.
 > from the same connection, so a couple of typos in a row will produce *"Too many tries.
 > Wait a minute."* That is what it sounds like. Waiting a minute is the fix. If it says
 > *"That code is not one of mine"*, check for a typo — the code is not case-sensitive and
-> spaces are ignored, but an `8` typed as a `B` will not work.
+> any spaces they typed are ignored, but an `8` typed as a `B` will not work.
 
 ### Blog
 

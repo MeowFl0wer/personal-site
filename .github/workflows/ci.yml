@@ -64,6 +64,26 @@ jobs:
       - name: Types
         run: npx tsc --noEmit
 
+      - name: Tests
+        run: npm test
+
+      - name: Migrations must build an empty database
+        # The failure this is here for: production has `push: false`, so a
+        # database nobody migrated has no tables, and the site comes up and
+        # then answers 500 with "no such table: site_settings" on the first
+        # request. It was found by hand once. Once is enough.
+        env:
+          DATABASE_URI: file:./data/migration-check.db
+          NODE_ENV: production
+        run: |
+          rm -f data/migration-check.db
+          npm run migrate
+          test "$(sqlite3 data/migration-check.db \
+            "select count(*) from sqlite_master where type='table' and name='site_settings';")" = "1" \
+            || { echo "::error::migrations ran but site_settings does not exist"; exit 1; }
+          rm -f data/migration-check.db
+          echo "An empty database migrates to a usable schema."
+
       - name: Build the server target
         # The one the deploy workflow never touches: /admin, /api, draft mode
         # and the redirects all exist here and in no other build.

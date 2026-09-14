@@ -67,10 +67,28 @@ Every one so far had an answer outside it — see the reasoning in the header of
   sees an anonymous reader and refuses anything marked private. It fails closed,
   which hides the problem: the file is not leaked, it is simply invisible to the
   person holding a valid grant too. Private uploads are served `unoptimized`.
+- **Production does not push schema.** `push` is on only outside production, so
+  a schema change that "just worked" in dev reaches a production database as
+  nothing at all. Generate a migration with `npm run migrate:create` and commit
+  it alongside the change; `src/migrations/` is part of the source.
+- **A path that starts with `/` can still leave the site.** `/\evil.example`
+  passes `startsWith("/") && !startsWith("//")` and the URL parser resolves it
+  to another origin. Only the parser knows — see `lib/safe-redirect.ts`, which
+  also explains why it returns a `URL` rather than a path: the same-origin
+  pathname `//evil.example` escapes again if anyone resolves it a second time.
+- **Never regenerate `package-lock.json` with `node_modules` present.** npm
+  prunes the lock to the platform it can see, and the Linux native packages —
+  swc, sharp, lightningcss — quietly vanish. `npm ci` then fails on CI and on
+  the server. Remove both, or neither.
 
 ## Before saying the server build is unaffected
 
 ```bash
-npm run build          # 41 routes, /admin and /api among them
+npm test               # the redirect allow-list, which is security-relevant
+npm run build          # 19 routes, /admin and /api among them
 npm run build:static   # 37 pages in out/, no /admin, no /api
 ```
+
+The `(41/41)` in the server build's output is prerender units, not routes — the
+route table underneath it is the thing with 19 rows in it. They have been
+confused before, in this file.
