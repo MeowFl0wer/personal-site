@@ -59,6 +59,34 @@ const isDraft = cache(async () => {
   }
 });
 
+/**
+ * Who is asking, as far as Payload is concerned.
+ *
+ * Every query below runs with `overrideAccess: false` and this user, which is
+ * what makes the access control in payload/access.ts actually run. Without it
+ * the Local API's default — override everything — meant `readPublished` was
+ * dead code and an unpublished draft rendered on the public site exactly like
+ * a published one.
+ *
+ * Outside a request there is no one asking: the static export and the CLI
+ * scripts both land in the catch, and an anonymous reader is the strictest
+ * answer, which is the right default for a folder of files on a public host.
+ */
+const viewer = cache(async () => {
+  try {
+    const { headers } = await import("next/headers");
+    const payload = await client();
+    const { user } = await payload.auth({ headers: await headers() });
+    return user ?? null;
+  } catch {
+    return null;
+  }
+});
+
+/** The two arguments every read below shares. Spread, so a call site cannot
+    quietly forget one of them. */
+const asViewer = async () => ({ overrideAccess: false, user: await viewer() });
+
 /* ------------------------------------------------------------------- media */
 
 const FALLBACK_MEDIA: Media = {
@@ -97,7 +125,7 @@ const isVideo = (ref: MediaRef) =>
 
 export const getSettings = cache(async (): Promise<SiteSetting> => {
   const payload = await client();
-  return payload.findGlobal({ slug: "site-settings", depth: 1 });
+  return payload.findGlobal({ slug: "site-settings", depth: 1, ...(await asViewer()) });
 });
 
 /**
@@ -153,7 +181,7 @@ export const getPrivateSocialCount = cache(async (): Promise<number> => {
 
 export const getHome = cache(async (): Promise<HomeDoc> => {
   const payload = await client();
-  return payload.findGlobal({ slug: "home", depth: 1, draft: await isDraft() });
+  return payload.findGlobal({ slug: "home", depth: 1, draft: await isDraft(), ...(await asViewer()) });
 });
 
 /** Only the sections the admin left visible, in the order they were dragged into. */
@@ -172,7 +200,7 @@ export const getHomeSections = cache(async () => {
  */
 export const getCollage = cache(async (): Promise<CollageView> => {
   const payload = await client();
-  const doc = await payload.findGlobal({ slug: "collage", depth: 2, draft: await isDraft() });
+  const doc = await payload.findGlobal({ slug: "collage", depth: 2, draft: await isDraft(), ...(await asViewer()) });
 
   const asMedia = (value: unknown) =>
     value && typeof value === "object" && "url" in value ? (value as MediaDoc) : null;
@@ -246,7 +274,7 @@ export type ResumeView = ResumeDoc & {
 
 export const getResume = cache(async (): Promise<ResumeView> => {
   const payload = await client();
-  const doc = await payload.findGlobal({ slug: "resume", depth: 1, draft: await isDraft() });
+  const doc = await payload.findGlobal({ slug: "resume", depth: 1, draft: await isDraft(), ...(await asViewer()) });
 
   /* A demonstration has nothing to protect: the writing in it is invented and
      the name is a placeholder. So it ships whole, and the covering becomes
@@ -285,6 +313,7 @@ export const getProjects = cache(async (): Promise<ProjectDoc[]> => {
   const payload = await client();
   const { docs } = await payload.find({
     collection: "projects",
+    ...(await asViewer()),
     depth: 2,
     limit: 100,
     sort: ORDER,
@@ -301,6 +330,7 @@ export const getProject = cache(async (slug: string): Promise<ProjectDoc | null>
   const payload = await client();
   const { docs } = await payload.find({
     collection: "projects",
+    ...(await asViewer()),
     where: { slug: { equals: slug } },
     depth: 2,
     limit: 1,
@@ -340,6 +370,7 @@ export const getLifeEntries = cache(async (): Promise<LifeDoc[]> => {
   const payload = await client();
   const { docs } = await payload.find({
     collection: "life",
+    ...(await asViewer()),
     depth: 2,
     limit: 100,
     sort: ORDER,
@@ -352,6 +383,7 @@ export const getLifeEntry = cache(async (slug: string): Promise<LifeDoc | null> 
   const payload = await client();
   const { docs } = await payload.find({
     collection: "life",
+    ...(await asViewer()),
     where: { slug: { equals: slug } },
     depth: 2,
     limit: 1,
@@ -426,6 +458,7 @@ export const getGallery = cache(async (): Promise<Photo[]> => {
   const payload = await client();
   const { docs } = await payload.find({
     collection: "gallery",
+    ...(await asViewer()),
     depth: 1,
     limit: 300,
     sort: ORDER,
@@ -453,6 +486,7 @@ export const getBuiltTools = cache(async (): Promise<BuiltToolDoc[]> => {
   const payload = await client();
   const { docs } = await payload.find({
     collection: "built-tools",
+    ...(await asViewer()),
     depth: 1,
     limit: 100,
     sort: ORDER,
@@ -473,6 +507,7 @@ export const getUsedTools = cache(async () => {
   const payload = await client();
   const { docs } = await payload.find({
     collection: "used-tools",
+    ...(await asViewer()),
     depth: 0,
     limit: 200,
     sort: ORDER,
@@ -503,6 +538,7 @@ export const getPosts = cache(async (): Promise<PostDoc[]> => {
 
   const { docs } = await payload.find({
     collection: "posts",
+    ...(await asViewer()),
     depth: 2,
     limit: 100,
     sort: "-publishedAt",
@@ -518,6 +554,7 @@ export const getPost = cache(async (slug: string): Promise<PostDoc | null> => {
   const payload = await client();
   const { docs } = await payload.find({
     collection: "posts",
+    ...(await asViewer()),
     where: { slug: { equals: slug } },
     depth: 2,
     limit: 1,
