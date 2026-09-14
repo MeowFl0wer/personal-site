@@ -1,0 +1,20 @@
+# Payload writes these, drizzle-kit writes the SQL inside them, and nothing here
+# is typed by hand. Two consequences worth spelling out:
+#
+#   -whitespace          the generated SQL indents with a space followed by a
+#                        tab, which `git diff --check` reports on every one of
+#                        four and a half thousand lines. Whitespace inside a SQL
+#                        string is not significant and the file must not be
+#                        reformatted — it is regenerated, and a diff against a
+#                        hand-tidied copy would be unreadable.
+#   linguist-generated   collapses them by default in pull request diffs, so a
+#                        schema change shows up as the change rather than as
+#                        four thousand lines of CREATE TABLE.
+src/migrations/*.ts     -whitespace linguist-generated=true
+src/migrations/*.json   -whitespace linguist-generated=true
+
+# Generated from the schema by `npm run generate:types`, same reasoning.
+src/payload-types.ts    linguist-generated=true
+
+# Lock files are resolver output. Never merged by hand; regenerated instead.
+package-lock.json       -diff linguist-generated=true

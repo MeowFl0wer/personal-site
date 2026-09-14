@@ -21,7 +21,8 @@
     "test": "node --import tsx --test src/lib/*.test.ts",
     "migrate": "payload migrate",
     "migrate:create": "payload migrate:create",
-    "migrate:status": "payload migrate:status"
+    "migrate:status": "payload migrate:status",
+    "migrate:baseline": "node scripts/baseline-migrations.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

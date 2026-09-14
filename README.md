@@ -162,13 +162,18 @@ two outputs. The portrait is the only thing the print version drops.
 
 The site and the admin are one Next.js app, so it is one deploy.
 
-### The first run, in order
+### The first run
+
+**There are two of these, and they are not the same.** Which one you want
+depends on whether the database has ever been developed against.
+
+#### A brand-new database
 
 ```bash
 npm ci
 npm run build
-npm run migrate                 # creates the schema — see below
-npm run seed                    # first deploy only; creates the owner + starter content
+npm run migrate                 # creates the schema
+npm run seed                    # creates the owner + starter content
 npm start
 ```
 
@@ -179,6 +184,34 @@ nothing ever asks you to think about migrations. In production that is off —
 symptom is not a helpful error at startup; it is the site coming up and then
 answering `500` with `SQLITE_ERROR: no such table: site_settings` on the first
 request. Mounting an empty persistent volume is not enough on its own.
+
+The directory has to exist; the file does not. libSQL creates `data/site.db` and
+refuses to create `data/`, exiting 1 if it is missing.
+
+#### A database you have been editing locally
+
+This is the one you are most likely to be deploying: `data/site.db`, with real
+content in it, built by the development schema push. It has all the tables and no
+record of any migration, so `payload migrate` can only offer to run the initial
+one — and warns, correctly, that data loss will occur, because that migration
+starts by creating tables that already exist.
+
+**Do not answer yes to that prompt.** Say what is already true instead:
+
+```bash
+cp data/site.db data/site.db.backup     # it takes a backup too; take your own
+npm run migrate:baseline
+```
+
+It checks that all 188 tables the initial migration creates are actually present,
+refuses if any are missing, and then records that migration as applied without
+running it. After that this database is an ordinary migrated database: `npm run
+migrate` reports nothing to do, and the next migration you write applies to it
+normally. Verified both ways on a copy before this was written.
+
+It is a one-off. Running it twice refuses.
+
+### Every change after that
 
 Migrations live in `src/migrations/` and are committed. **After any change to a
 collection, a global or a field, generate one and commit it with the change:**

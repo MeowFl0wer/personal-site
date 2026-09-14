@@ -76,6 +76,11 @@ jobs:
           DATABASE_URI: file:./data/migration-check.db
           NODE_ENV: production
         run: |
+          # `data/` exists by now because the seed step creates it, but this
+          # step should not depend on the order of the one above it: libSQL
+          # will not create a missing directory and fails with exit 1 when it
+          # has to. The file itself it does create.
+          mkdir -p data
           rm -f data/migration-check.db
           npm run migrate
           test "$(sqlite3 data/migration-check.db \
