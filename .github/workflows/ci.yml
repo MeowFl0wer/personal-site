@@ -1,0 +1,97 @@
+name: Check
+
+# Nothing checked a branch before this. The only workflow in the repository
+# deploys the preview from `main`, which means the first thing to notice a
+# broken build was the deploy of it — and it only ever built the *export*.
+# The server target, the one that matters, was never built by anything but a
+# person remembering to.
+#
+# This is the check AGENTS.md already asks for before claiming the server build
+# is unaffected, run by a machine instead of from memory.
+
+on:
+  pull_request:
+  push:
+    branches: ['**']
+
+# A second push supersedes the first; there is no reason to finish checking a
+# commit nobody is looking at any more.
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    env:
+      # Throwaway, and only ever inside this runner. It is here at all because
+      # the secrets now refuse to fall back under NODE_ENV=production, which
+      # `next build` sets — so a build with no secret is supposed to fail, and
+      # CI would be testing that rather than the code.
+      PAYLOAD_SECRET: ci-only-not-a-real-secret
+      DATABASE_URI: file:./data/site.db
+
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Generate placeholder media
+        run: npm run placeholders
+
+      - name: Seed a throwaway database
+        # The pages read their content from Payload while the build runs, so
+        # there has to be something to read. Created in the runner, discarded
+        # with it.
+        env:
+          SEED_EMAIL: ci@example.com
+          SEED_PASSWORD: ci-only-password
+        run: npm run seed -- --force
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Types
+        run: npx tsc --noEmit
+
+      - name: Build the server target
+        # The one the deploy workflow never touches: /admin, /api, draft mode
+        # and the redirects all exist here and in no other build.
+        run: npm run build
+
+      - name: Build the static export
+        run: npm run build:static
+
+      - name: The export must not contain the CMS
+        # Cheap, and it is the invariant the whole two-deployments arrangement
+        # rests on. Counts are deliberately not asserted — a new page is not a
+        # regression, and a check that fails every time a page is added is a
+        # check that gets deleted.
+        run: |
+          test -f out/index.html   || { echo "::error::no out/index.html"; exit 1; }
+          test -f out/.nojekyll    || { echo "::error::no out/.nojekyll"; exit 1; }
+          test ! -d out/admin      || { echo "::error::/admin was exported"; exit 1; }
+          test ! -d out/api        || { echo "::error::/api was exported"; exit 1; }
+          echo "Exported $(find out -name index.html | wc -l) pages, no CMS among them."
+
+      - name: The working tree must be as the build found it
+        # build-static moves the server-only routes aside, flips the demo flag
+        # and copies the media library into public/, and puts all three back.
+        # If any of that stops being true, this is where it shows up rather
+        # than in somebody's checkout.
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::the build left the tree dirty"
+            git status --short
+            exit 1
+          fi
