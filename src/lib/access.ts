@@ -23,7 +23,11 @@ export type GrantCheck =
  * someone was when they opened it.
  */
 export const redeem = async (input: string): Promise<GrantCheck> => {
-  const code = input.trim().toUpperCase();
+  /* All whitespace, not just the ends. The alphabet was chosen so the code
+     survives being read down a phone, and someone reading one out loud groups
+     it — so someone typing it back writes the groups. `trim()` alone made the
+     guide's claim that spaces are ignored untrue. */
+  const code = input.replace(/\s+/g, "").toUpperCase();
   if (!code) return { ok: false, reason: "unknown" };
 
   const payload = await getPayload({ config });
