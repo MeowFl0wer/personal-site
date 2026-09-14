@@ -1,0 +1,46 @@
+# Dependency updates.
+#
+# This exists because of a specific miss: next 16.3.2 shipped with an
+# unauthenticated RCE in the image optimizer (GHSA-2xp9-vwfh-vxw4), on the code
+# path every picture on this site goes through, and it sat here until somebody
+# happened to run `npm audit`. A patch release had been out for a while. That is
+# exactly the gap this closes.
+#
+# Grouped, because the alternative is five pull requests every Monday and the
+# habit of closing them unread. Security updates are deliberately left ungrouped
+# and unscheduled — those should arrive on their own, immediately, and be
+# obviously not a routine bump.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # Payload's packages carry a peer dependency on each other's exact
+      # version, so they can only ever move together — npm refuses otherwise.
+      payload:
+        patterns:
+          - "payload"
+          - "@payloadcms/*"
+      # Likewise next and its eslint config, which is pinned to the same version.
+      next:
+        patterns:
+          - "next"
+          - "eslint-config-next"
+      # Everything else that is only a patch or a minor, in one pull request.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # The workflows pin their actions to commit SHAs, which means a tag moving
+  # underneath them does nothing — and also that nothing updates them unless
+  # something is watching. This is that something.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
