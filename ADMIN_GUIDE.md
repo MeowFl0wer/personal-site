@@ -208,6 +208,44 @@ To produce a PDF: open `/about`, click **Print / Save PDF**, and choose *Save as
 The print stylesheet hides the navigation, the footer and the portrait, and tightens the
 spacing to A4.
 
+### Who may read the private half of About
+
+Your name as it appears on documents, and the record of where you have worked and
+studied, are **not public**. A visitor without a code is not shown them — and they are
+not merely hidden with styling; the real words are never sent to their browser at all.
+What they get instead is text of exactly the same shape, so the page keeps its layout
+and every covered line can be clicked to ask you for a code.
+
+Everything below is under **Site → Access**.
+
+**To let someone in:**
+
+1. **Create New**. Fill in **Recipient** (a name is enough — it is for you) and
+   **Purpose** (e.g. *job application, Studio X*).
+2. Set **Expires At**. It defaults to thirty days. Shorter is better — you can always
+   issue another.
+3. **Save.** The code is generated on save: ten characters, no letters that can be
+   confused down a phone line.
+4. Send them **either** the link shown on the row **or** the code itself. They are the
+   same secret. The link takes them straight in; the code is typed into the prompt at
+   the foot of `/about`, or into the box that opens when they click a covered line.
+
+**Give each person their own.** That is the whole reason the recipient field exists: if
+one code has to be turned off, only one person is affected.
+
+**To turn one off:** tick **Revoked**. It stops working immediately — including for
+anyone who already used it and is still reading. Prefer this, or shortening the expiry,
+over deleting the row: deleting loses the record of who you gave it to and why.
+
+Open **Use** on any row to see whether it arrived: first used, last used, and how many
+times. That is all that is recorded — no addresses, no browser fingerprints.
+
+> **If someone says the code is not working:** wrong codes are limited to three a minute
+> from the same connection, so a couple of typos in a row will produce *"Too many tries.
+> Wait a minute."* That is what it sounds like. Waiting a minute is the fix. If it says
+> *"That code is not one of mine"*, check for a typo — the code is not case-sensitive and
+> spaces are ignored, but an `8` typed as a `B` will not work.
+
 ### Blog
 
 **Content → Blog.** Fields: Title, Description, Category, Tags, Cover, Published At, and a
@@ -295,6 +333,12 @@ is what keeps them feeling like a signature rather than a habit.
   One file, one row, referenced from as many pages as you like.
 - **Replacing a file** in place updates it everywhere it is used.
 - **Deleting** — check what references it first. A deleted image leaves a gap.
+- **Private** (in the sidebar) — withholds the **file itself**, not only the page it
+  appears on. This is easy to get wrong: a locked page whose pictures are still sitting
+  on a public URL is not locked. Tick this and the file answers only to you and to
+  someone holding a valid access code; everyone else gets a refusal, and the page falls
+  back to a placeholder rather than a broken image. Private files are also left out of
+  the GitHub Pages preview entirely.
 
 Every upload is automatically resized to 400 / 800 / 1400 / 2000 / 2800px WebP versions,
 and the page picks the right one for the screen. Upload the original.
