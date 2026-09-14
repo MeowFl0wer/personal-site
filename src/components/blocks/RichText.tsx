@@ -35,8 +35,13 @@ const converters: JSXConvertersFunction = ({ defaultConverters }) => ({
   ),
   link: ({ node, nodesToJSX }) => {
     const children = nodesToJSX({ nodes: node.children });
-    const url = node.fields?.url ?? "#";
-    const external = /^https?:\/\//.test(url);
+    /* An href is the one field in the editor that runs code if it is allowed
+       to. Only the four shapes a link on this site can legitimately have get
+       through; anything else — `javascript:`, `data:` — becomes an anchor to
+       nowhere rather than a script. */
+    const raw = node.fields?.url ?? "#";
+    const url = /^(https?:\/\/|mailto:|tel:|[/#])/i.test(raw) ? raw : "#";
+    const external = /^https?:\/\//i.test(url);
 
     if (external) {
       return (
