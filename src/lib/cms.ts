@@ -111,6 +111,7 @@ export const toMedia = (ref: MediaRef, fallbackAlt = ""): Media | undefined => {
     width: ref.width ?? 1600,
     height: ref.height ?? 1000,
     poster: undefined,
+    unoptimized: ref.private === true || undefined,
   };
 };
 
@@ -213,7 +214,12 @@ export const getCollage = cache(async (): Promise<CollageView> => {
         id: String(theme.id ?? theme.label),
         label: theme.label,
         alt: theme.alt ?? "",
-        card: { url: card.url, width: card.width ?? 0, height: card.height ?? 0 },
+        card: {
+          url: card.url,
+          width: card.width ?? 0,
+          height: card.height ?? 0,
+          unoptimized: card.private === true || undefined,
+        },
         wash: {
           sky: theme.wash?.sky ?? "",
           haze: theme.wash?.haze ?? "",
@@ -228,6 +234,7 @@ export const getCollage = cache(async (): Promise<CollageView> => {
               url: image.url,
               width: image.width ?? 0,
               height: image.height ?? 0,
+              unoptimized: image.private === true || undefined,
               x: piece.x,
               y: piece.y,
               scale: piece.width,

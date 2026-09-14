@@ -131,6 +131,7 @@ function Card({ theme, offset }: { theme: CollageThemeView; offset: number }) {
         width={theme.card.width || 760}
         height={theme.card.height || 950}
         sizes="(min-width: 1024px) 22vw, 0px"
+        unoptimized={theme.card.unoptimized}
         className="absolute inset-0 h-full w-full origin-center -rotate-[1.5deg] object-cover shadow-[0_1px_2px_rgba(20,26,22,0.10),0_18px_40px_-18px_rgba(20,26,22,0.35)]"
       />
 
@@ -150,6 +151,7 @@ function Piece({ piece }: { piece: CollagePieceView }) {
       width={piece.width || 480}
       height={piece.height || 480}
       sizes="(min-width: 1024px) 16vw, 0px"
+      unoptimized={piece.unoptimized}
       className="absolute h-auto drop-shadow-[0_10px_14px_rgba(20,26,22,0.18)]"
       style={{
         left: `${piece.x}%`,

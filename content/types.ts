@@ -22,6 +22,17 @@ export type Media = {
   video?: string;
   /** Frame shown before the video decodes. Defaults to `src`. */
   poster?: string;
+  /**
+   * Skip Next's image optimizer for this one file.
+   *
+   * Set for an upload marked private. The optimizer fetches the source through
+   * an internal request that carries no cookies, so Payload — correctly — sees
+   * an anonymous reader and refuses a private file. It fails closed rather than
+   * leaking, but it also failed for the reader holding a valid grant, which
+   * made the whole flag unusable. Served unoptimized, the browser fetches the
+   * file itself and its access cookie goes with it.
+   */
+  unoptimized?: boolean;
 };
 
 export type Link = {

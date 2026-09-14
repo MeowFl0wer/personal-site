@@ -15,7 +15,13 @@
 /** Where the visitor's chosen arrangement is remembered. */
 export const COLLAGE_STORAGE_KEY = "collage-theme";
 
-export type CollageImage = { url: string; width: number; height: number };
+export type CollageImage = {
+  url: string;
+  width: number;
+  height: number;
+  /** See `Media.unoptimized` — a private upload cannot go through the optimizer. */
+  unoptimized?: boolean;
+};
 
 export type CollagePieceView = CollageImage & {
   /** All four are percentages of the card's own box. */

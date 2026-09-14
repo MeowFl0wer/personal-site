@@ -65,6 +65,7 @@ export function GalleryGrid({
                   alt={photo.alt}
                   fill
                   sizes={portrait ? "(max-width: 768px) 100vw, 33vw" : "(max-width: 768px) 100vw, 45vw"}
+                  unoptimized={photo.unoptimized}
                   className="object-cover transition-transform duration-[--duration-scene] ease-[--ease-primary] group-hover:scale-[1.02]"
                 />
               </div>
