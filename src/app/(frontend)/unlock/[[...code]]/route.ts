@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { redeem } from "@/lib/access";
 import { ACCESS_COOKIE } from "@/lib/unlocked";
+import { sameOriginTarget } from "@/lib/safe-redirect";
 
 /**
  * Redeems an access code and sends the visitor back to the page.
@@ -91,24 +92,23 @@ const addressOf = (request: NextRequest) =>
   "unknown";
 
 /**
- * Only ever back to a path on this site: `next` arrives from the request, and
- * an open redirect is how a phishing page borrows someone's domain.
+ * `/about` + `?access=expired`, without assuming `next` had no query of its own.
+ *
+ * Takes the URL lib/safe-redirect already resolved rather than a path to
+ * resolve again — see the note there about `/..//evil.example`, which is
+ * same-origin until somebody parses its pathname a second time.
  */
-const safeNext = (requested: string | null) =>
-  requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/about";
-
-/** `/about` + `?access=expired`, without assuming `next` had no query of its own. */
-const backTo = (request: NextRequest, next: string, status?: string) => {
-  const url = new URL(next, request.nextUrl.origin);
+const backTo = (next: URL, status?: string) => {
+  const url = new URL(next);
   if (status) url.searchParams.set("access", status);
   // 303: whatever the method was, the browser follows it with a GET.
   return NextResponse.redirect(url, 303);
 };
 
 /** Shared by both methods once the code and the destination are in hand. */
-const unlock = async (request: NextRequest, rawCode: string, next: string) => {
+const unlock = async (request: NextRequest, rawCode: string, next: URL) => {
   const address = addressOf(request);
-  if (exhausted(address)) return backTo(request, next, "throttled");
+  if (exhausted(address)) return backTo(next, "throttled");
 
   /* A code is ten characters. Anything longer is not a typo, and there is no
      reason to hand it to the database. */
@@ -116,12 +116,12 @@ const unlock = async (request: NextRequest, rawCode: string, next: string) => {
 
   if (!result.ok) {
     recordFailure(address);
-    return backTo(request, next, result.reason);
+    return backTo(next, result.reason);
   }
 
   clearFailures(address);
 
-  const response = backTo(request, next);
+  const response = backTo(next);
   response.cookies.set({
     name: result.cookie.name,
     value: result.cookie.value,
@@ -137,13 +137,13 @@ const unlock = async (request: NextRequest, rawCode: string, next: string) => {
 /** The link from the admin, and the way back out. */
 export async function GET(request: NextRequest, context: { params: Promise<{ code?: string[] }> }) {
   const { code: segments } = await context.params;
-  const next = safeNext(request.nextUrl.searchParams.get("next"));
+  const next = sameOriginTarget(request.nextUrl.searchParams.get("next"), request.nextUrl.origin);
 
   /* Giving it back. There has to be a way to stop being unlocked — to check
      what a visitor sees, or to hand the laptop to someone. Clearing the cookie
      is the whole of it: nothing else on the server remembers. */
   if (request.nextUrl.searchParams.get("lock") !== null) {
-    const response = backTo(request, next);
+    const response = backTo(next);
     response.cookies.set({ name: ACCESS_COOKIE, value: "", expires: new Date(0), path: "/" });
     return response;
   }
@@ -157,8 +157,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ cod
 /** The prompt on the page, where the code is typed rather than followed. */
 export async function POST(request: NextRequest) {
   const form = await request.formData().catch(() => null);
-  const next = safeNext(
+  const next = sameOriginTarget(
     typeof form?.get("next") === "string" ? (form.get("next") as string) : null,
+    request.nextUrl.origin,
   );
   const code = typeof form?.get("code") === "string" ? (form.get("code") as string) : "";
   return unlock(request, code, next);
