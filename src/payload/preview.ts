@@ -1,3 +1,5 @@
+import { requiredSecret } from "@/lib/secrets";
+
 /**
  * Draft preview.
  *
@@ -11,14 +13,22 @@
  *
  * There is no separate "preview renderer" to drift out of sync with the site.
  */
-export const PREVIEW_SECRET = process.env.PREVIEW_SECRET ?? "dev-preview-secret";
+/**
+ * Read when it is used, not when this module loads.
+ *
+ * The static export runs `next build` with NODE_ENV=production and has no
+ * preview endpoint at all — the whole route is moved aside for it — so
+ * demanding the secret at import time would fail a build that never needed it.
+ * Every caller below is a callback the admin invokes at runtime.
+ */
+export const previewSecret = () => requiredSecret("PREVIEW_SECRET", "development-only-preview-secret");
 
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? process.env.PAYLOAD_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export const previewUrl = (collection: string, path: string) => {
   const params = new URLSearchParams({
-    secret: PREVIEW_SECRET,
+    secret: previewSecret(),
     collection,
     path: path || "/",
   });

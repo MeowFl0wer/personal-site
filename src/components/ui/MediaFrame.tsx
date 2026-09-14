@@ -39,6 +39,7 @@ export function MediaFrame({
             fill
             sizes={sizes}
             priority={priority}
+            unoptimized={media.unoptimized}
             className="object-cover"
           />
         ) : (
@@ -49,6 +50,7 @@ export function MediaFrame({
             height={media.height}
             sizes={sizes}
             priority={priority}
+            unoptimized={media.unoptimized}
             className="h-full w-full object-cover"
           />
         )}

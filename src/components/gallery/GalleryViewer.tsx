@@ -195,6 +195,7 @@ export function GalleryViewer({
             fill
             sizes="90vw"
             priority
+            unoptimized={photo.unoptimized}
             className="object-contain"
           />
         </div>

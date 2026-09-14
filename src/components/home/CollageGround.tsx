@@ -16,25 +16,44 @@ import { COLLAGE_STORAGE_KEY, type CollageThemeView } from "./collage-types";
  * ahead of any painting, which is the only place that problem can be solved —
  * and the reason <html> carries suppressHydrationWarning.
  */
+/**
+ * A CMS string is about to be written straight into a <style> and a <script>,
+ * and both of those elements end at a literal `<`. Neither a colour nor an
+ * arrangement's id can legitimately contain one — every value here is a hex
+ * triplet or an id — so dropping it costs nothing and closes the only way out
+ * of the element. The quote and the backslash go too, because the id is also
+ * written inside a quoted attribute selector.
+ *
+ * Belt and braces rather than trust: these fields are the owner's to set, so
+ * this is not defending against a stranger. It is making it impossible for a
+ * typo in a colour field to take the homepage down with a parse error, and for
+ * a future editor to be a way in.
+ */
+const cssSafe = (value: string) => value.replace(/[<>{}]/g, "");
+const selectorSafe = (value: string) => cssSafe(value).replace(/["\\]/g, "");
+
+/** `<` inside a JSON string literal, so `</script>` cannot end the script. */
+const jsonSafe = (json: string) => json.replace(/</g, "\\u003c");
+
 export function CollageGround({ themes }: { themes: CollageThemeView[] }) {
   if (!themes.length) return null;
 
   const stops = (theme: CollageThemeView) =>
     [
-      theme.wash.sky && `--wash-sky:${theme.wash.sky}`,
-      theme.wash.haze && `--wash-haze:${theme.wash.haze}`,
-      theme.wash.landFade && `--wash-meadow-fade:${theme.wash.landFade}`,
-      theme.wash.land && `--wash-meadow:${theme.wash.land}`,
+      theme.wash.sky && `--wash-sky:${cssSafe(theme.wash.sky)}`,
+      theme.wash.haze && `--wash-haze:${cssSafe(theme.wash.haze)}`,
+      theme.wash.landFade && `--wash-meadow-fade:${cssSafe(theme.wash.landFade)}`,
+      theme.wash.land && `--wash-meadow:${cssSafe(theme.wash.land)}`,
     ]
       .filter(Boolean)
       .join(";");
 
   const css = [
     `:root{${stops(themes[0])}}`,
-    ...themes.map((theme) => `:root[data-collage="${theme.id}"]{${stops(theme)}}`),
+    ...themes.map((theme) => `:root[data-collage="${selectorSafe(theme.id)}"]{${stops(theme)}}`),
   ].join("");
 
-  const known = JSON.stringify(themes.map((theme) => theme.id));
+  const known = jsonSafe(JSON.stringify(themes.map((theme) => theme.id)));
   const script = `try{var k=${JSON.stringify(COLLAGE_STORAGE_KEY)},t=localStorage.getItem(k);if(t&&${known}.indexOf(t)>-1)document.documentElement.dataset.collage=t}catch(e){}`;
 
   return (

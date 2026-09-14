@@ -80,6 +80,60 @@ const nextConfig: NextConfig = {
         redirects: async () => [
           { source: "/resume", destination: "/about", permanent: true },
         ],
+
+        /**
+         * The browser-side protections that are only switched on by a header.
+         *
+         * Server target only, and not because the preview does not deserve
+         * them: `headers` is the same kind of thing as `redirects` — there is
+         * no server in a static export to send one, and GitHub Pages does not
+         * take instructions from this file. The preview's headers are whatever
+         * is in front of it. Nothing under `src/` is involved either way.
+         *
+         * No Content-Security-Policy here yet. A useful one needs a nonce on
+         * every inline script — the collage's first-paint script, the accent
+         * block, and the ones Next injects itself — and a nonce needs
+         * middleware, which a static export does not have. That is a decision
+         * about how the site is rendered, not a header to bolt on, so it is
+         * deliberately left for later rather than shipped as a permissive CSP
+         * that would mostly be decoration.
+         */
+        headers: async () => [
+          {
+            source: "/:path*",
+            headers: [
+              // No content-type guessing. An upload that claims to be an image
+              // does not get to be HTML because the bytes looked like it.
+              { key: "X-Content-Type-Options", value: "nosniff" },
+
+              // SAMEORIGIN, not DENY. The admin's live preview renders the
+              // site in an iframe next to the editor, and it is the same
+              // origin — DENY would break the CMS to defend against nothing.
+              { key: "X-Frame-Options", value: "SAMEORIGIN" },
+
+              // The one that matters most here: an access link is
+              // `/unlock/<code>`, and without this the code travels in a
+              // `Referer` to whatever the visitor clicks next.
+              { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+
+              // Nothing on this site asks for any of these, so nothing on this
+              // site should be able to.
+              {
+                key: "Permissions-Policy",
+                value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+              },
+
+              // Two years, subdomains included. No `preload`: that submits the
+              // domain to a list browsers ship, and getting off it is slow —
+              // worth doing deliberately once the real site is settled, not as
+              // a side effect of adding a header.
+              {
+                key: "Strict-Transport-Security",
+                value: "max-age=63072000; includeSubDomains",
+              },
+            ],
+          },
+        ],
       }),
 };
 

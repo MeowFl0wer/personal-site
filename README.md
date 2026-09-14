@@ -46,6 +46,12 @@ SEED_PASSWORD=           # change it in the admin after first sign-in
 | `npm run generate:types` | Regenerate `src/payload-types.ts` after a schema change |
 | `npm run generate:importmap` | Regenerate the admin import map after adding an admin component |
 | `npm run lint` | ESLint |
+| `npm run build:static` | Build the GitHub Pages preview into `out/` — see [below](#the-github-pages-preview) |
+| `npm run preview:static` | Serve `out/` on :4000, to check the preview before pushing |
+| `npm run photos` | Import a directory of photographs into the gallery |
+| `npm run collage` | Import a directory of cut-outs for the home page collage |
+| `npm run collage:save` | Write the current collage arrangement back to `content/` |
+| `npm run payload` | Payload's own CLI |
 
 ---
 
@@ -156,18 +162,140 @@ two outputs. The portrait is the only thing the print version drops.
 
 The site and the admin are one Next.js app, so it is one deploy.
 
-**Database.** SQLite by default (`data/site.db`) — fine on a VPS or in Docker with a
-persistent volume. On a serverless host, point `DATABASE_URI` at a hosted libSQL/Turso
-database and set `DATABASE_AUTH_TOKEN`. No code change.
+### The first run
 
-**Media.** Local disk is development only — files written to the container do not survive
-a redeploy on most hosts. Set `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`,
-`S3_ENDPOINT` and `S3_PUBLIC_URL` and every upload goes to S3-compatible object storage
-(Cloudflare R2, Backblaze B2, AWS S3) instead. Again, no code change — uploads are
-addressed through Payload, never by path.
+**There are two of these, and they are not the same.** Which one you want
+depends on whether the database has ever been developed against.
 
-**Publishing.** Pressing Publish revalidates the affected pages. No build, no deploy, no
-commit.
+#### A brand-new database
+
+```bash
+npm ci
+npm run build
+npm run migrate                 # creates the schema
+npm run seed                    # creates the owner + starter content
+npm start
+```
+
+**`npm run migrate` is not optional, and it is the step that is easy to miss.**
+In development the SQLite adapter pushes schema changes straight into the file, so
+nothing ever asks you to think about migrations. In production that is off —
+`push: false` — and a database nobody has migrated has no tables at all. The
+symptom is not a helpful error at startup; it is the site coming up and then
+answering `500` with `SQLITE_ERROR: no such table: site_settings` on the first
+request. Mounting an empty persistent volume is not enough on its own.
+
+The directory has to exist; the file does not. libSQL creates `data/site.db` and
+refuses to create `data/`, exiting 1 if it is missing.
+
+#### A database you have been editing locally
+
+This is the one you are most likely to be deploying: `data/site.db`, with real
+content in it, built by the development schema push. It has all the tables and no
+record of any migration, so `payload migrate` can only offer to run the initial
+one — and warns, correctly, that data loss will occur, because that migration
+starts by creating tables that already exist.
+
+**Do not answer yes to that prompt.** Say what is already true instead:
+
+```bash
+# Stop anything writing to the database first — the dev server, a running
+# `npm start`. This takes its own backup, but a copy nothing is holding open
+# is a better backup.
+cp data/site.db data/site.db.backup
+npm run migrate:baseline
+```
+
+It does not take your word for it. It runs the initial migration against an
+empty temporary file and compares this database to the result — every table,
+and for each one the columns, types, defaults, primary keys, foreign keys and
+indexes. Anything that does not match is named and the whole thing refuses,
+because recording a migration as applied when it has not been is worse than the
+problem: every later migration would then run against a schema nobody checked.
+
+The comparison ignores the physical order of columns, which differs between a
+database grown by dev pushes and one built in a single migration and means
+nothing.
+
+It also insists on finding exactly the marker a dev push leaves — one row,
+`dev`, batch `-1`. A migration table in any other state is a history it cannot
+work out, so it stops rather than guess.
+
+If everything matches it takes a timestamped backup and records the migration as
+applied, in one transaction, without running any of its DDL. After that this is
+an ordinary migrated database: `npm run migrate` reports nothing to do, and the
+next migration you write applies normally.
+
+It is a one-off, and running it twice refuses.
+
+### Every change after that
+
+Migrations live in `src/migrations/` and are committed. **After any change to a
+collection, a global or a field, generate one and commit it with the change:**
+
+```bash
+npm run migrate:create some_name_for_it
+npm run migrate:status          # what has and has not been applied
+```
+
+### Environment
+
+`PAYLOAD_SECRET` and `PREVIEW_SECRET` have no fallback in production — see
+[.env.example](./.env.example), which says which one stops the process and which
+one only breaks the Preview button.
+
+**`PAYLOAD_SECRET` cannot be rotated casually.** It signs admin sessions *and* the
+cookie that unlocks the private half of `/about`, so changing it signs everyone out
+and invalidates every access code already in someone's hands.
+
+### Database
+
+SQLite by default (`data/site.db`) — fine on a VPS or in Docker **with a persistent
+volume**. On a serverless host, point `DATABASE_URI` at a hosted libSQL/Turso database
+and set `DATABASE_AUTH_TOKEN`. No code change. Back up by copying the file.
+
+### Media
+
+Local disk is development only — uploads written next to the app do not survive a
+redeploy on most hosts. Setting `S3_BUCKET`, `S3_ACCESS_KEY_ID` and
+`S3_SECRET_ACCESS_KEY` moves every upload to S3-compatible object storage (Cloudflare
+R2, Backblaze B2, AWS S3); `S3_ENDPOINT`, `S3_REGION` and `S3_PUBLIC_URL` are covered
+in `.env.example`, including which of them the storage plugin never sees. No code
+change either way — uploads are addressed through Payload, never by path.
+
+### Behind a reverse proxy
+
+**The proxy must set `x-forwarded-for` itself, replacing whatever the client sent.**
+The unlock endpoint rate-limits on that header. A proxy that passes the client's own
+value through lets the limit be sidestepped; a proxy that sets nothing at all puts
+every visitor in one bucket, where three wrong codes from anyone locks out everyone
+for a minute. There is a server-wide ceiling behind the per-address one either way,
+so this is not the only thing standing there — but it is the one that is supposed to
+work.
+
+TLS and the http → https redirect belong to the proxy. The app sends HSTS itself —
+see `headers()` in [next.config.ts](./next.config.ts) — with `includeSubDomains` and a
+two-year `max-age`, which is a commitment worth understanding before it ships:
+
+- It binds **every** subdomain, at every depth, for two years, whether or not that
+  subdomain exists yet. A browser that has seen it will refuse plain HTTP to
+  `anything.euan.im` with no way to click through.
+- Cloudflare's certificate for this zone covers `euan.im` and `*.euan.im` — the root
+  and one level of subdomain. A **deeper** name like `a.b.euan.im` is not covered by
+  it and would need a certificate of its own before it could answer at all.
+- Removing the header later does not undo it. Browsers keep the rule until it
+  expires; the only retraction is serving `max-age=0` and waiting for every visitor
+  to come back.
+
+It is deliberate here: the real site is the zone root, everything deployed under it
+is behind Cloudflare and therefore already on HTTPS. Setting it at the proxy instead
+is equally valid — just do not set it in both places with different values.
+
+### Publishing
+
+Pressing Publish writes the change and revalidates the affected paths. Every route is
+currently rendered per request, so an edit is visible immediately regardless — the
+revalidation is there for when that stops being true. No build, no deploy, no commit.
 
 ---
 
@@ -230,7 +358,9 @@ which is what the workflow's `base_path` input is for.
 
 ### Where it publishes
 
-Today, the project URL: **https://meowfl0wer.github.io/personal-site/**
+**<https://demov1.euan.im>** — a custom domain at its own root, which is why
+`BASE_PATH` is empty in the workflow and `PAGES_CNAME` is set. The bare project URL,
+`meowfl0wer.github.io/personal-site`, redirects here.
 
 Pages has to be enabled once before the workflow can deploy — the workflow token is not
 allowed to create the site itself, whatever `permissions` says. Already done for this repo;
@@ -240,14 +370,18 @@ a fork needs `Settings → Pages → Source: GitHub Actions`, or:
 gh api repos/OWNER/REPO/pages -X POST -f build_type=workflow
 ```
 
-To move it to **demov1.euan.im**:
+To go back to the bare project URL, set `BASE_PATH: '/personal-site'` and
+`PAGES_CNAME: ''` in the workflow. Those two change **together**. A CNAME published for a
+name that does not resolve takes the preview offline, and a base path left set would
+prefix every URL on a domain that has no such directory.
 
-1. Add a DNS `CNAME` for `demov1` → `MeowFl0wer.github.io`, and wait for it to resolve.
-2. In the workflow, set `BASE_PATH: ''` and `PAGES_CNAME: 'demov1.euan.im'`.
-
-Those two change **together**. A CNAME published for a name that does not resolve yet takes
-the preview offline, and a base path left set would prefix every URL on a domain that has
-no such directory.
+**"Enforce HTTPS" in the Pages settings is greyed out, and that is expected.** The
+domain resolves to Cloudflare, not to GitHub, so GitHub cannot validate it and cannot
+issue a certificate for it. Visitors still get TLS — Cloudflare's, valid for
+`*.euan.im`. What that arrangement does not give you is the http → https redirect;
+that switch is *Always Use HTTPS*, in Cloudflare, not here. Turning GitHub's own
+enforcement back on would mean pointing the record at GitHub directly, which is a
+choice about who serves the preview, not a checkbox.
 
 ---
 

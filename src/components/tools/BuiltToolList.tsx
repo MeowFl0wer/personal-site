@@ -73,6 +73,7 @@ function ToolRow({ tool, index }: { tool: BuiltToolItem; index: number }) {
             alt={tool.preview.alt}
             fill
             sizes="(max-width: 768px) 30vw, 190px"
+            unoptimized={tool.preview.unoptimized}
             className="object-cover"
           />
         </div>

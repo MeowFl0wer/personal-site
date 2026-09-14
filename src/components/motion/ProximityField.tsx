@@ -202,15 +202,22 @@ export function SplitChars({
   className,
   charClassName,
 }: {
-  text: string;
+  text?: string | null;
   className?: string;
   charClassName?: string;
 }) {
+  /* A global with no row yet — a database that has been migrated but not
+     seeded — hands this `undefined`, and `Array.from(undefined)` throws while
+     the page is rendering on the server, so the whole homepage becomes a 500
+     rather than a page with a missing greeting. Typed as required, and at
+     runtime it is not. */
+  const characters = text ?? "";
+
   return (
     <span className={className}>
-      <span className="sr-only">{text}</span>
+      <span className="sr-only">{characters}</span>
       <span aria-hidden="true">
-        {Array.from(text).map((char, index) =>
+        {Array.from(characters).map((char, index) =>
           char === " " ? (
             <span key={index}> </span>
           ) : (

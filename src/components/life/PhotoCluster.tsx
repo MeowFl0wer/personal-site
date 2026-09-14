@@ -74,6 +74,7 @@ export function PhotoCluster({
               alt={image.alt || title}
               fill
               sizes={sizes}
+              unoptimized={image.unoptimized}
               className="object-cover"
             />
           </div>
@@ -98,6 +99,7 @@ export function PhotoCluster({
             alt={image.alt || title}
             fill
             sizes={sizes}
+            unoptimized={image.unoptimized}
             className="object-cover"
           />
         </div>

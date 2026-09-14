@@ -54,6 +54,7 @@ function ProjectRow({ project, index }: { project: ProjectListItem; index: numbe
                   alt=""
                   fill
                   sizes="(max-width: 768px) 40vw, 25vw"
+                  unoptimized={project.cover.unoptimized}
                   className="object-cover"
                 />
               </span>

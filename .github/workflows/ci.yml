@@ -1,0 +1,180 @@
+name: Check
+
+# Nothing checked a branch before this. The only workflow in the repository
+# deploys the preview from `main`, which means the first thing to notice a
+# broken build was the deploy of it — and it only ever built the *export*.
+# The server target, the one that matters, was never built by anything but a
+# person remembering to.
+#
+# This is the check AGENTS.md already asks for before claiming the server build
+# is unaffected, run by a machine instead of from memory.
+
+on:
+  pull_request:
+  push:
+    branches: ['**']
+
+# A second push supersedes the first; there is no reason to finish checking a
+# commit nobody is looking at any more.
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    env:
+      # Throwaway, and only ever inside this runner. It is here at all because
+      # the secrets now refuse to fall back under NODE_ENV=production, which
+      # `next build` sets — so a build with no secret is supposed to fail, and
+      # CI would be testing that rather than the code.
+      PAYLOAD_SECRET: ci-only-not-a-real-secret
+      DATABASE_URI: file:./data/site.db
+
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Generate placeholder media
+        run: npm run placeholders
+
+      - name: Seed a throwaway database
+        # The pages read their content from Payload while the build runs, so
+        # there has to be something to read. Created in the runner, discarded
+        # with it.
+        env:
+          SEED_EMAIL: ci@example.com
+          SEED_PASSWORD: ci-only-password
+        run: npm run seed -- --force
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Types
+        run: npx tsc --noEmit
+
+      - name: Tests
+        run: npm test
+
+      - name: Migrations must build an empty database
+        # The failure this is here for: production has `push: false`, so a
+        # database nobody migrated has no tables, and the site comes up and
+        # then answers 500 with "no such table: site_settings" on the first
+        # request. It was found by hand once. Once is enough.
+        env:
+          DATABASE_URI: file:./data/migration-check.db
+          NODE_ENV: production
+        run: |
+          # `data/` exists by now because the seed step creates it, but this
+          # step should not depend on the order of the one above it: libSQL
+          # will not create a missing directory and fails with exit 1 when it
+          # has to. The file itself it does create.
+          mkdir -p data
+          rm -f data/migration-check.db
+          npm run migrate
+          test "$(sqlite3 data/migration-check.db \
+            "select count(*) from sqlite_master where type='table' and name='site_settings';")" = "1" \
+            || { echo "::error::migrations ran but site_settings does not exist"; exit 1; }
+          rm -f data/migration-check.db
+          echo "An empty database migrates to a usable schema."
+
+      - name: Baselining must accept a dev-push database and refuse a wrong one
+        # The path the actual deployment takes. `npm run seed` above left a
+        # database built by the development schema push — all the tables and a
+        # single `dev`/-1 row — which is the shape baselining exists for.
+        #
+        # Every check is in an `if`, deliberately: the default shell is `bash
+        # -e`, and `cmd && { exit 1; }` aborts the step when cmd merely fails,
+        # which here is the passing case.
+        env:
+          NODE_ENV: production
+        run: |
+          cp data/site.db data/baseline-check.db
+          before=$(sqlite3 data/baseline-check.db "select count(*) from media;")
+
+          DATABASE_URI=file:./data/baseline-check.db npm run migrate:baseline
+
+          recorded=$(sqlite3 data/baseline-check.db \
+            "select count(*) from payload_migrations where batch = 1;")
+          if [ "$recorded" != "1" ]; then
+            echo "::error::baseline did not record exactly one applied migration"
+            sqlite3 data/baseline-check.db "select name, batch from payload_migrations;"
+            exit 1
+          fi
+
+          after=$(sqlite3 data/baseline-check.db "select count(*) from media;")
+          if [ "$after" != "$before" ]; then
+            echo "::error::baseline changed the data ($before -> $after rows)"
+            exit 1
+          fi
+
+          # Afterwards `migrate` must be a no-op that asks nothing. Two
+          # assertions, not one: piping straight into grep hands the pipeline
+          # grep's exit status, so a `migrate` that failed without printing
+          # "data loss" would have passed this silently.
+          if ! DATABASE_URI=file:./data/baseline-check.db \
+              npm run migrate < /dev/null > migrate-after-baseline.log 2>&1; then
+            echo "::error::migrate failed after baselining"
+            cat migrate-after-baseline.log
+            exit 1
+          fi
+          if grep -qi "data loss" migrate-after-baseline.log; then
+            echo "::error::still prompting about data loss after baselining"
+            cat migrate-after-baseline.log
+            exit 1
+          fi
+          rm -f migrate-after-baseline.log
+
+          # A schema that does not match must be refused rather than recorded.
+          cp data/site.db data/baseline-bad.db
+          sqlite3 data/baseline-bad.db "ALTER TABLE media DROP COLUMN caption;"
+          if DATABASE_URI=file:./data/baseline-bad.db npm run migrate:baseline; then
+            echo "::error::baseline accepted a database missing a column"
+            exit 1
+          fi
+
+          rm -f data/baseline-check.db data/baseline-bad.db data/*.before-baseline-*
+          echo "Baselining accepts a dev-push database and refuses a damaged one."
+
+      - name: Build the server target
+        # The one the deploy workflow never touches: /admin, /api, draft mode
+        # and the redirects all exist here and in no other build.
+        run: npm run build
+
+      - name: Build the static export
+        run: npm run build:static
+
+      - name: The export must not contain the CMS
+        # Cheap, and it is the invariant the whole two-deployments arrangement
+        # rests on. Counts are deliberately not asserted — a new page is not a
+        # regression, and a check that fails every time a page is added is a
+        # check that gets deleted.
+        run: |
+          test -f out/index.html   || { echo "::error::no out/index.html"; exit 1; }
+          test -f out/.nojekyll    || { echo "::error::no out/.nojekyll"; exit 1; }
+          test ! -d out/admin      || { echo "::error::/admin was exported"; exit 1; }
+          test ! -d out/api        || { echo "::error::/api was exported"; exit 1; }
+          echo "Exported $(find out -name index.html | wc -l) pages, no CMS among them."
+
+      - name: The working tree must be as the build found it
+        # build-static moves the server-only routes aside, flips the demo flag
+        # and copies the media library into public/, and puts all three back.
+        # If any of that stops being true, this is where it shows up rather
+        # than in somebody's checkout.
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::the build left the tree dirty"
+            git status --short
+            exit 1
+          fi

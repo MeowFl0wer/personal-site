@@ -234,6 +234,23 @@ const privateFiles = () => {
   return names;
 };
 
+/**
+ * Takes the copy back out again.
+ *
+ * `public/` is served by the Next server as-is, at the root, with nothing in
+ * front of it — that is what `public/` is. So a copy of the media library left
+ * sitting there after a preview build means the *real* site starts answering
+ * `/media/<name>` for every upload, straight off the disk, without Payload ever
+ * being asked whether the reader may have it. The export in `out/` has its own
+ * copy and does not need this one, so it goes as soon as the build is done, and
+ * on failure and Ctrl-C as well.
+ */
+const removeCopiedMedia = () => {
+  if (!fs.existsSync(PUBLIC_MEDIA)) return;
+  fs.rmSync(PUBLIC_MEDIA, { recursive: true, force: true });
+  log("removed the public/media copy");
+};
+
 /** Copies Payload's upload directory into public/ so the export includes it. */
 const copyMedia = () => {
   const source = path.join(root, "media");
@@ -380,6 +397,7 @@ const main = async () => {
   fs.rmSync(path.join(root, ".next"), { recursive: true, force: true });
 
   copyMedia();
+  process.on("exit", removeCopiedMedia);
 
   await withDemoMode(() =>
     withRoutesHidden(() => {
@@ -410,6 +428,9 @@ const main = async () => {
     fs.writeFileSync(path.join(OUT, "CNAME"), `${CNAME}\n`);
     log(`wrote CNAME: ${CNAME}`);
   }
+
+  removeCopiedMedia();
+  process.off("exit", removeCopiedMedia);
 
   const pages = fs
     .readdirSync(OUT, { recursive: true })

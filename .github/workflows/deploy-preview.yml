@@ -24,6 +24,11 @@ concurrency:
   # would leave the site mid-swap, so only the build is interruptible.
   cancel-in-progress: false
 
+# Pinned to commit SHAs rather than tags throughout. A tag is a moving
+# pointer: whoever can move `v5` can change what runs here, and what runs here
+# holds `pages: write` and `id-token: write` on a public repository. The tag is
+# kept in the trailing comment so the SHAs stay readable, and dependabot's
+# github-actions ecosystem is what moves them.
 permissions:
   contents: read
   pages: write
@@ -47,9 +52,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 22
           cache: npm
@@ -104,9 +109,9 @@ jobs:
       # out of band:
       #   gh api repos/OWNER/REPO/pages -X POST -f build_type=workflow
       # or Settings → Pages → Source: GitHub Actions. A fork needs the same.
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: out
 
@@ -118,4 +123,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

@@ -18,6 +18,7 @@ import { Home } from "./payload/globals/Home";
 import { Resume } from "./payload/globals/Resume";
 import { SiteSettings } from "./payload/globals/SiteSettings";
 import { Collage } from "./payload/globals/Collage";
+import { requiredSecret } from "./lib/secrets";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -68,7 +69,9 @@ export default buildConfig({
     push: process.env.NODE_ENV !== "production",
   }),
 
-  secret: process.env.PAYLOAD_SECRET ?? "change-me-in-env-local",
+  // Signs every admin session. A fallback here is a published signing key —
+  // see lib/secrets.
+  secret: requiredSecret("PAYLOAD_SECRET", "development-only-payload-secret"),
 
   // Generated types are committed, so the frontend content layer is type-safe
   // against the actual schema rather than against a hand-written guess.

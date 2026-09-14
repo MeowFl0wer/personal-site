@@ -41,6 +41,7 @@ export function LifeCard({
             alt={cover.alt}
             fill
             sizes="96px"
+            unoptimized={cover.unoptimized}
             className="object-cover transition-transform duration-[--duration-ui] ease-[--ease-primary] group-hover:scale-[1.03]"
           />
         </div>
