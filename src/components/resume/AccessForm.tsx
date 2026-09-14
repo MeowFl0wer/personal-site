@@ -13,14 +13,17 @@ import { cn } from "@/lib/utils";
  * are missing — and it is the one that still works with scripting off, since
  * no dialog opens then.
  *
- * A plain GET form either way, so unlocking is a navigation: no fetch, no
- * state, nothing to undo when a code is refused.
+ * A plain form either way, so unlocking is a navigation: no fetch, no state,
+ * nothing to undo when a code is refused. It posts rather than gets, so the
+ * code someone types stays out of their history and out of the server's access
+ * log; the link sent from the admin is still a GET, because a link has nowhere
+ * else to put it.
  */
 const MESSAGES: Record<string, string> = {
   unknown: "That code is not one of mine.",
   expired: "That code has expired. Ask me for another.",
   revoked: "That code has been turned off.",
-  throttled: "Too many tries. Wait ten minutes.",
+  throttled: "Too many tries. Wait a minute.",
 };
 
 function Message() {
@@ -71,7 +74,7 @@ export function AccessForm({
 
   return (
     <form
-      method="get"
+      method="post"
       action="/unlock"
       onSubmit={demoCode ? onDemoSubmit : undefined}
       className={cn("flex flex-col gap-4", className)}
