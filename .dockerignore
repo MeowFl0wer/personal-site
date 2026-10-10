@@ -1,0 +1,20 @@
+# Read by the Containerfile build (Podman/Buildah and Docker both honour it).
+# Secrets, the database and uploads must never reach an image layer; the build
+# runs from a clean checkout, but this is the second lock.
+.git
+.github
+node_modules
+.next
+out
+coverage
+data
+media
+.env
+.env.*
+!.env.example
+*.pem
+*.db
+*.db-*
+tsconfig.tsbuildinfo
+DEPLOYMENT-HANDOFF.md
+REVIEW-BRIEF.md
