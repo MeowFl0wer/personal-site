@@ -105,10 +105,13 @@ jobs:
 
           DATABASE_URI=file:./data/baseline-check.db npm run migrate:baseline
 
+          # The seed ran on the current code, so its database has every
+          # migration's schema and all of them must be recorded.
+          expected=$(find src/migrations -name '*.ts' ! -name index.ts | wc -l | tr -d ' ')
           recorded=$(sqlite3 data/baseline-check.db \
             "select count(*) from payload_migrations where batch = 1;")
-          if [ "$recorded" != "1" ]; then
-            echo "::error::baseline did not record exactly one applied migration"
+          if [ "$recorded" != "$expected" ]; then
+            echo "::error::baseline recorded $recorded applied migration(s), expected $expected"
             sqlite3 data/baseline-check.db "select name, batch from payload_migrations;"
             exit 1
           fi
@@ -136,6 +139,59 @@ jobs:
           fi
           rm -f migrate-after-baseline.log
 
+          # A dev-push database last pushed before the newest migration — the
+          # shape of a real one after a dependency upgrade changed the schema.
+          # Made from the baselined copy: the newest migration is rolled back
+          # with its own `down`, and the history is put back to the dev marker.
+          # Baselining must claim everything but that migration, and `migrate`
+          # must then apply it without touching the data.
+          if [ "$expected" -gt 1 ]; then
+            # Payload's CLI can exit 0 having done nothing (see payloadOnReference in
+            # scripts/baseline-migrations.mjs). Run, check the effect, retry twice;
+            # a non-zero exit is a real failure and is not retried.
+            payload_until() {
+              local check=$1; shift
+              for attempt in 1 2 3; do
+                "$@" < /dev/null || return 1
+                if eval "$check"; then return 0; fi
+                echo "(no effect from: $*; retrying)"
+              done
+              return 1
+            }
+            newest=$(find src/migrations -name '*.ts' ! -name index.ts -exec basename {} .ts \; | sort | tail -n 1)
+            cp data/baseline-check.db data/baseline-behind.db
+            sqlite3 data/baseline-behind.db \
+              "update payload_migrations set batch = 2 where name = '$newest';"
+            payload_until '[ "$(sqlite3 data/baseline-behind.db "select count(*) from payload_migrations where name = '"'"'$newest'"'"';")" = 0 ]' \
+              env DATABASE_URI=file:./data/baseline-behind.db npx payload migrate:down \
+              || { echo "::error::could not roll back $newest on the test copy"; exit 1; }
+            sqlite3 data/baseline-behind.db \
+              "delete from payload_migrations; insert into payload_migrations (name, batch) values ('dev', -1);"
+
+            DATABASE_URI=file:./data/baseline-behind.db npm run migrate:baseline
+            claimed=$(sqlite3 data/baseline-behind.db \
+              "select count(*) from payload_migrations where batch = 1 and name <> '$newest';")
+            if [ "$claimed" != "$((expected - 1))" ] || [ "$(sqlite3 data/baseline-behind.db \
+                "select count(*) from payload_migrations;")" != "$((expected - 1))" ]; then
+              echo "::error::baseline did not claim exactly the migrations before $newest"
+              sqlite3 data/baseline-behind.db "select name, batch from payload_migrations;"
+              exit 1
+            fi
+
+            payload_until '[ "$(sqlite3 data/baseline-behind.db "select count(*) from payload_migrations where name = '"'"'$newest'"'"';")" = 1 ]' \
+              env DATABASE_URI=file:./data/baseline-behind.db npm run migrate \
+              || { echo "::error::migrate failed after baselining the database one migration behind"; exit 1; }
+            if [ "$(sqlite3 data/baseline-behind.db \
+                "select count(*) from payload_migrations where name = '$newest';")" != "1" ]; then
+              echo "::error::migrate did not apply $newest after baselining"
+              exit 1
+            fi
+            if [ "$(sqlite3 data/baseline-behind.db "select count(*) from media;")" != "$before" ]; then
+              echo "::error::baselining and migrating a database one migration behind changed the data"
+              exit 1
+            fi
+          fi
+
           # A schema that does not match must be refused rather than recorded.
           cp data/site.db data/baseline-bad.db
           sqlite3 data/baseline-bad.db "ALTER TABLE media DROP COLUMN caption;"
@@ -144,7 +200,7 @@ jobs:
             exit 1
           fi
 
-          rm -f data/baseline-check.db data/baseline-bad.db data/*.before-baseline-*
+          rm -f data/baseline-check.db data/baseline-behind.db data/baseline-bad.db data/*.before-baseline-*
           echo "Baselining accepts a dev-push database and refuses a damaged one."
 
       - name: Build the server target
