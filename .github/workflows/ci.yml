@@ -146,9 +146,10 @@ jobs:
           # Baselining must claim everything but that migration, and `migrate`
           # must then apply it without touching the data.
           if [ "$expected" -gt 1 ]; then
-            # scripts/payload.mjs keeps Payload's CLI from exiting 0 having done
-            # nothing; the effect is still checked, and retried twice, as a second
-            # lock. A non-zero exit is a real failure and is not retried.
+            # scripts/payload.mjs retries a Payload start-up that stalls (which,
+            # run bare, exits 0 having done nothing); the effect is still checked,
+            # and retried twice, as a second lock. A non-zero exit is a real
+            # failure and is not retried.
             payload_until() {
               local check=$1; shift
               for attempt in 1 2 3; do

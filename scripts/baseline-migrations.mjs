@@ -148,9 +148,9 @@ const reference = path.join(referenceDir, "reference.db");
 /**
  * `payload <args>` against the reference, as a production deployment runs it.
  *
- * Runs through scripts/payload.mjs, which holds the event loop open while
- * Payload's CLI starts; without it the CLI now and then exits 0 having done
- * nothing at all, not a line of output (see that file).
+ * Runs through scripts/payload.mjs, which retries a start-up that stalls
+ * before reaching the CLI; run bare, such a stall exits 0 having done nothing
+ * at all, not a line of output (see that file).
  *
  * The exit status alone is still not trusted: each call names what it was
  * supposed to achieve, and a silent exit 0 that did not achieve it is retried,
