@@ -30,6 +30,11 @@ const STATIC = process.env.STATIC_EXPORT === "1";
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const nextConfig: NextConfig = {
+  // No `X-Powered-By: Next.js, Payload`. It tells a visitor nothing they need
+  // and a scanner exactly which advisories to try. withPayload honours this:
+  // it adds its own header only while this is not `false`, and Next's goes too.
+  poweredByHeader: false,
+
   // The floating route indicator Next draws bottom-left in development. It has
   // never shipped to visitors — it does not exist in a production build — but
   // it sits on top of the page while working on it, which is exactly where the
