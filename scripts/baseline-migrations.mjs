@@ -1,6 +1,6 @@
 /**
- * Marks the initial migration as already applied, for a database that was
- * built by the development schema push rather than by running it.
+ * Marks migrations as already applied, for a database that was built by the
+ * development schema push rather than by running them.
  *
  *   npm run migrate:baseline
  *
@@ -18,9 +18,23 @@
  * is a way forward, and the database in question is the one with the real
  * content in it.
  *
- * The way forward is to write down what is already true: the schema this
- * migration describes is present, so the migration is applied. That is all this
- * does — one DELETE and one INSERT. It creates and alters nothing.
+ * The way forward is to write down what is already true: the schema these
+ * migrations describe is present, so they are applied. That is all this does —
+ * one DELETE and an INSERT per migration. It creates and alters nothing.
+ *
+ * ── Which migrations ────────────────────────────────────────────────────────
+ *
+ * A development database has whatever schema the code had the last time it was
+ * pushed, and that need not be the newest one: a database last pushed before a
+ * dependency upgrade added a column has every migration up to the one that adds
+ * it, and not that one. So this does not assume. It finds the longest run of
+ * migrations, from the first, whose result this database matches exactly — and
+ * records that run, and nothing past it. `npm run migrate` then applies the
+ * rest through the same code path a fresh deployment uses.
+ *
+ * Shorter runs are reached by rolling the reference back one migration at a
+ * time with its own `down`. A `down` that is wrong produces a reference nothing
+ * matches, so the failure is a refusal, never a false acceptance.
  *
  * ── How it checks, and why it is done this way ──────────────────────────────
  *
@@ -32,7 +46,7 @@
  * missing a column — `media.caption`, say — still has every table, and was
  * accepted. Names are the one thing a schema cannot be wrong about quietly.
  *
- * So the comparison is against a real database: the migration is run on an
+ * So the comparison is against a real database: the migrations are run on an
  * empty file, and the result is what this one has to match. No SQL is parsed
  * and no schema is described twice — the reference is produced by the same code
  * path that a fresh deployment runs.
@@ -90,7 +104,7 @@ const sqlite = (target, statement) => {
 const rows = (target, statement) =>
   sqlite(target, statement).split("\n").filter(Boolean).map((line) => line.split(SEP));
 
-/* ── The migration to claim ─────────────────────────────────────────────── */
+/* ── The migrations there are to claim ──────────────────────────────────── */
 
 const migrations = fs
   .readdirSync(MIGRATIONS)
@@ -98,16 +112,14 @@ const migrations = fs
   .map((name) => name.replace(/\.ts$/, ""))
   .sort();
 
-if (migrations.length !== 1) {
-  fail(
-    `Expected exactly one migration to baseline, found ${migrations.length}:`,
-    ...migrations.map((name) => `  ${name}`),
-    ``,
-    `Baselining is a one-off for a database that predates migrations entirely.`,
-    `With more than one, work out by hand which of them this database has.`,
-  );
+if (migrations.length === 0) {
+  fail(`No migrations in ${path.relative(root, MIGRATIONS)} — there is nothing to baseline against.`);
 }
-const [initial] = migrations;
+for (const name of migrations) {
+  if (!/^[0-9]{8}_[0-9]{6}_[a-z0-9_]+$/.test(name)) {
+    fail(`Unexpected migration file name: ${name}`, `Names are written into SQL below, so only Payload's own pattern is accepted.`);
+  }
+}
 
 /* ── This must be a development-push database, and nothing else ─────────── */
 
@@ -128,30 +140,43 @@ if (!isDevPush) {
   );
 }
 
-/* ── Build the reference, by running the migration for real ─────────────── */
+/* ── Build the reference, by running the migrations for real ────────────── */
 
-const reference = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "baseline-")), "reference.db");
-process.stdout.write(`Building a reference database from ${initial} … `);
+const referenceDir = fs.mkdtempSync(path.join(os.tmpdir(), "baseline-"));
+const reference = path.join(referenceDir, "reference.db");
 
-const built = spawnSync("npx", ["payload", "migrate"], {
-  cwd: root,
-  encoding: "utf8",
-  env: {
-    ...process.env,
-    DATABASE_URI: `file:${reference}`,
-    NODE_ENV: "production",
-    PAYLOAD_SECRET: process.env.PAYLOAD_SECRET || "baseline-reference-only",
-  },
-});
+/** `payload <args>` against the reference, as a production deployment runs it. */
+const payloadOnReference = (...args) =>
+  spawnSync("npx", ["payload", ...args], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+    env: {
+      ...process.env,
+      DATABASE_URI: `file:${reference}`,
+      NODE_ENV: "production",
+      PAYLOAD_SECRET: process.env.PAYLOAD_SECRET || "baseline-reference-only",
+    },
+  });
 
-if (built.status !== 0 || !fs.existsSync(reference)) {
+const giveUp = (what, result) => {
   console.log("failed.");
+  fs.rmSync(referenceDir, { recursive: true, force: true });
   fail(
-    `Could not run ${initial} against an empty database:`,
-    (built.stderr || built.stdout || "").trim().split("\n").slice(-6).join("\n"),
+    `Could not ${what} (exit ${result.status}${result.signal ? `, signal ${result.signal}` : ""}):`,
+    (result.stderr || result.stdout || "").trim().split("\n").slice(-6).join("\n") || "(no output)",
     ``,
     `Without a reference there is nothing to compare against, so this stops here.`,
   );
+};
+
+process.stdout.write(`Building a reference database from ${migrations.length} migration(s) … `);
+const built = payloadOnReference("migrate");
+if (built.status !== 0 || !fs.existsSync(reference)) giveUp(`run the migrations against an empty database`, built);
+
+const applied = rows(reference, `select name from payload_migrations order by name;`).map(([name]) => name);
+if (applied.join("\n") !== migrations.join("\n")) {
+  giveUp(`account for the reference: it recorded ${applied.length} of ${migrations.length} migrations`, built);
 }
 console.log("done.");
 
@@ -195,76 +220,124 @@ const indexesOf = (target, table) =>
     }),
   );
 
-const differences = [];
-const here = tablesOf(file);
-const there = tablesOf(reference);
+const differencesFrom = (ref) => {
+  const differences = [];
+  const here = tablesOf(file);
+  const there = tablesOf(ref);
 
-for (const table of there) if (!here.includes(table)) differences.push(`missing table: ${table}`);
-for (const table of here) if (!there.includes(table)) differences.push(`unexpected table: ${table}`);
+  for (const table of there) if (!here.includes(table)) differences.push(`missing table: ${table}`);
+  for (const table of here) if (!there.includes(table)) differences.push(`unexpected table: ${table}`);
 
-for (const table of there.filter((name) => here.includes(name))) {
-  for (const [what, mine, theirs] of [
-    ["column", columnsOf(file, table), columnsOf(reference, table)],
-    ["foreign key", foreignKeysOf(file, table), foreignKeysOf(reference, table)],
-    ["index", indexesOf(file, table), indexesOf(reference, table)],
-  ]) {
-    for (const item of theirs) if (!mine.has(item)) differences.push(`${table}: missing ${what}  ${item}`);
-    for (const item of mine) if (!theirs.has(item)) differences.push(`${table}: unexpected ${what}  ${item}`);
+  for (const table of there.filter((name) => here.includes(name))) {
+    for (const [what, mine, theirs] of [
+      ["column", columnsOf(file, table), columnsOf(ref, table)],
+      ["foreign key", foreignKeysOf(file, table), foreignKeysOf(ref, table)],
+      ["index", indexesOf(file, table), indexesOf(ref, table)],
+    ]) {
+      for (const item of theirs) if (!mine.has(item)) differences.push(`${table}: missing ${what}  ${item}`);
+      for (const item of mine) if (!theirs.has(item)) differences.push(`${table}: unexpected ${what}  ${item}`);
+    }
   }
+  return { differences, tables: there.length };
+};
+
+/* ── Find the longest run of migrations this database matches ───────────── */
+
+/* Newest first. Each step back undoes exactly one migration: it is moved into a
+   batch of its own, and `migrate:down` rolls back only the latest batch. */
+let matched = 0;
+let compared = 0;
+let closest = null;
+
+for (let count = migrations.length; count >= 1; count--) {
+  const { differences, tables } = differencesFrom(reference);
+  if (differences.length === 0) {
+    matched = count;
+    compared = tables;
+    break;
+  }
+  if (!closest || differences.length < closest.differences.length) closest = { count, differences };
+  if (count === 1) break;
+
+  const last = migrations[count - 1];
+  process.stdout.write(`Not ${last}; rolling the reference back one migration … `);
+  sqlite(reference, `update payload_migrations set batch = 2 where name = '${last}';`);
+  const down = payloadOnReference("migrate:down");
+  if (down.status !== 0) giveUp(`roll back ${last} on the reference`, down);
+  const left = rows(reference, `select count(*) from payload_migrations;`)[0][0];
+  if (left !== String(count - 1)) giveUp(`roll back ${last} on the reference: ${left} migration(s) left`, down);
+  console.log("done.");
 }
 
-fs.rmSync(path.dirname(reference), { recursive: true, force: true });
+fs.rmSync(referenceDir, { recursive: true, force: true });
 
-if (differences.length > 0) {
+if (matched === 0) {
+  const through = migrations[closest.count - 1];
   fail(
-    `This database does not match what ${initial} produces — ${differences.length} difference(s):`,
+    `This database does not match the result of any run of migrations from the first.`,
+    `Closest is through ${through} — ${closest.differences.length} difference(s):`,
     ``,
-    ...differences.slice(0, 20).map((line) => `  ${line}`),
-    ...(differences.length > 20 ? [`  … and ${differences.length - 20} more`] : []),
+    ...closest.differences.slice(0, 20).map((line) => `  ${line}`),
+    ...(closest.differences.length > 20 ? [`  … and ${closest.differences.length - 20} more`] : []),
     ``,
-    `So the migration has NOT effectively been applied, and recording it as`,
-    `applied would leave every later migration running against a schema nobody`,
-    `verified. Refusing.`,
+    `So no migration can be said to have effectively been applied, and recording`,
+    `one as applied would leave every later migration running against a schema`,
+    `nobody verified. Refusing.`,
   );
 }
+
+const claimed = migrations.slice(0, matched);
+const pending = migrations.slice(matched);
 
 /* ── Write it down, in one transaction ──────────────────────────────────── */
 
 const backup = `${file}.before-baseline-${new Date().toISOString().replace(/[:.]/g, "-")}`;
 fs.copyFileSync(file, backup);
 
-/* One statement, one process, one transaction. Split across two sqlite3 runs
-   this could fail between them and leave a database with no migration rows at
-   all — which is neither where it started nor where it was going. */
+/* One statement, one process, one transaction. Split across several sqlite3
+   runs this could fail between them and leave a database with no migration
+   rows at all — which is neither where it started nor where it was going. */
 sqlite(
   file,
   `BEGIN IMMEDIATE;
    DELETE FROM payload_migrations WHERE batch < 0;
-   INSERT INTO payload_migrations (name, batch) VALUES ('${initial}', 1);
+   ${claimed.map((name) => `INSERT INTO payload_migrations (name, batch) VALUES ('${name}', 1);`).join("\n   ")}
    COMMIT;`,
 );
 
-const [[name, batch]] = rows(file, `select name, batch from payload_migrations;`);
-if (name !== initial || batch !== "1") {
-  fail(`The write did not take: payload_migrations says ${name} / ${batch}.`, `The backup is at ${backup}.`);
+const recorded = rows(file, `select name, batch from payload_migrations order by name;`);
+if (recorded.map(([name, batch]) => `${name}/${batch}`).join("\n") !== claimed.map((name) => `${name}/1`).join("\n")) {
+  fail(
+    `The write did not take: payload_migrations says`,
+    ...recorded.map(([name, batch]) => `  ${name} / ${batch}`),
+    `The backup is at ${backup}.`,
+  );
 }
 
 console.log(`
 Baselined ${path.relative(root, file)}
 
-  compared     ${there.length} tables — columns, defaults, primary keys,
+  compared     ${compared} tables — columns, defaults, primary keys,
                foreign keys and indexes — against a database built by
-               running ${initial} on an empty file
+               running ${claimed.length} migration(s) on an empty file
   backup       ${path.relative(root, backup)}
-  recorded     ${initial} as batch 1, replacing the development push marker
-
+  recorded     ${claimed.join(", ")} as batch 1,
+               replacing the development push marker
+${
+  pending.length === 0
+    ? `
 \`npm run migrate\` will now report nothing to do, and the next migration you
-create will apply to this database normally.
+create will apply to this database normally.`
+    : `  pending      ${pending.join(", ")}
+
+This database predates ${pending.length === 1 ? "that migration" : "those migrations"}. Back it up, then
+\`npm run migrate\` applies ${pending.length === 1 ? "it" : "them"}.`
+}
 `);
 
-/* For a remote libSQL database the write is the same two statements:
+/* For a remote libSQL database the write is the same statements:
      BEGIN IMMEDIATE;
      DELETE FROM payload_migrations WHERE batch < 0;
-     INSERT INTO payload_migrations (name, batch) VALUES ('<the migration>', 1);
+     INSERT INTO payload_migrations (name, batch) VALUES ('<each matched migration>', 1);
      COMMIT;
    Make the same comparison first. Do not skip it because it is tedious. */
