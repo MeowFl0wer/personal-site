@@ -41,3 +41,30 @@ export const sameOriginTarget = (
     return home;
   }
 };
+
+/**
+ * This site's public origin — what a redirect has to be built on.
+ *
+ * Not `request.nextUrl.origin`. In production the app is served by server.mjs
+ * on a Unix socket, and Next, with no host or port of its own, makes the
+ * request's origin up: it came out as `https://localhost:3000`, and the unlock
+ * endpoint sent every visitor there (found 2026-10-10 on the first request
+ * through the real domain). Nor the `Host` header, which is whatever the
+ * client sent.
+ *
+ * The configured site URL is the truth. The request's own origin is only the
+ * fallback, for `npm run dev`, where nothing may be configured and it is right.
+ */
+export const siteOrigin = (
+  requestOrigin: string,
+  configured: string | undefined = process.env.NEXT_PUBLIC_SITE_URL,
+): string => {
+  if (configured) {
+    try {
+      return new URL(configured).origin;
+    } catch {
+      /* A malformed setting falls through rather than taking the site down. */
+    }
+  }
+  return requestOrigin;
+};

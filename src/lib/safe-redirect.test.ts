@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { sameOriginTarget } from "./safe-redirect";
+import { sameOriginTarget, siteOrigin } from "./safe-redirect";
 
 const ORIGIN = "https://euan.im";
 
@@ -67,4 +67,23 @@ test("a same-origin result stays same-origin when reused", () => {
   assert.equal(new URL(target.pathname, ORIGIN).origin !== ORIGIN, true,
     "precondition: this is the pathname that would escape on a second parse");
   assert.equal(new URL(target).origin, ORIGIN, "reusing the URL itself is safe");
+});
+
+test("siteOrigin prefers the configured site URL to the request's made-up one", () => {
+  assert.equal(siteOrigin("https://localhost:3000", "https://euan.im"), "https://euan.im");
+  assert.equal(siteOrigin("https://localhost:3000", "https://euan.im/"), "https://euan.im");
+  assert.equal(siteOrigin("https://localhost:3000", "https://euan.im/some/path"), "https://euan.im");
+});
+
+test("siteOrigin falls back to the request's origin when nothing usable is configured", () => {
+  assert.equal(siteOrigin("http://localhost:3000", undefined), "http://localhost:3000");
+  assert.equal(siteOrigin("http://localhost:3000", ""), "http://localhost:3000");
+  assert.equal(siteOrigin("http://localhost:3000", "not a url"), "http://localhost:3000");
+});
+
+test("a redirect built on siteOrigin stays on the site even when the request's origin is wrong", () => {
+  const target = sameOriginTarget("/work/project-alpha", siteOrigin("https://localhost:3000", "https://euan.im"));
+  assert.equal(target.href, "https://euan.im/work/project-alpha");
+  const away = sameOriginTarget("https://localhost:3000/about", siteOrigin("https://localhost:3000", "https://euan.im"));
+  assert.equal(away.href, "https://euan.im/about");
 });

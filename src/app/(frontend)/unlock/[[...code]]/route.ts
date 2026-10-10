@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { redeem } from "@/lib/access";
 import { ACCESS_COOKIE } from "@/lib/unlocked";
-import { sameOriginTarget } from "@/lib/safe-redirect";
+import { sameOriginTarget, siteOrigin } from "@/lib/safe-redirect";
 
 /**
  * Redeems an access code and sends the visitor back to the page.
@@ -137,7 +137,7 @@ const unlock = async (request: NextRequest, rawCode: string, next: URL) => {
 /** The link from the admin, and the way back out. */
 export async function GET(request: NextRequest, context: { params: Promise<{ code?: string[] }> }) {
   const { code: segments } = await context.params;
-  const next = sameOriginTarget(request.nextUrl.searchParams.get("next"), request.nextUrl.origin);
+  const next = sameOriginTarget(request.nextUrl.searchParams.get("next"), siteOrigin(request.nextUrl.origin));
 
   /* Giving it back. There has to be a way to stop being unlocked — to check
      what a visitor sees, or to hand the laptop to someone. Clearing the cookie
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
   const form = await request.formData().catch(() => null);
   const next = sameOriginTarget(
     typeof form?.get("next") === "string" ? (form.get("next") as string) : null,
-    request.nextUrl.origin,
+    siteOrigin(request.nextUrl.origin),
   );
   const code = typeof form?.get("code") === "string" ? (form.get("code") as string) : "";
   return unlock(request, code, next);
