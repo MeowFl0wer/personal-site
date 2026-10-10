@@ -89,6 +89,10 @@ export function Navigation({ name, items }: { name: string; items: NavItem[] }) 
         <div className="flex h-16 items-center justify-between md:h-20">
           <Link href="/" className="text-small font-medium tracking-tight" aria-label={`${name} — home`}>
             {name}
+            {/* Says where the name leads: not everyone reads a wordmark as the
+                way home. Muted like the inactive nav items, so the name still
+                comes first. The aria-label already says it for screen readers. */}
+            <span className="font-normal text-muted"> (Home)</span>
           </Link>
 
           {/* Desktop */}
