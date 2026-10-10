@@ -321,6 +321,9 @@ const rewriteExportedMediaUrls = () => {
     ? [`${BASE_PATH}/api/media/file/`, "/api/media/file/"]
     : ["/api/media/file/"];
 
+  const escapedTo = to.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const mediaTrailingSlash = new RegExp(`(${escapedTo}[^"'\\s\\\\?#()<>/]+\\.[A-Za-z0-9]{2,5})/`, "g");
+
   let files = 0;
   let occurrences = 0;
 
@@ -341,6 +344,13 @@ const rewriteExportedMediaUrls = () => {
         occurrences += after.split(form).length - 1;
         after = after.split(form).join(to);
       }
+      // Payload 3.90 passes every URL it formats — upload URLs included —
+      // through applyTrailingSlash, which appends a slash whenever Next has set
+      // NEXT_TRAILING_SLASH, and this export sets trailingSlash. A file with a
+      // slash after it is a directory to GitHub Pages: every image 404'd. The
+      // filename is URI-encoded, so it holds no `/` of its own; the slash right
+      // after its extension is the one to drop.
+      after = after.replace(mediaTrailingSlash, "$1");
       fs.writeFileSync(full, after);
       files += 1;
     }

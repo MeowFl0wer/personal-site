@@ -148,13 +148,13 @@ const reference = path.join(referenceDir, "reference.db");
 /**
  * `payload <args>` against the reference, as a production deployment runs it.
  *
- * The exit status alone is not trusted. Payload's CLI starts with `void
- * start()` and compiles through tsx's off-thread loader; now and then — most
- * often on a cold tsx cache, and reliably in CI with stdin closed — the event
- * loop empties first and the process exits 0 having done nothing at all, not a
- * line of output. So each call names what it was supposed to achieve, and a
- * silent exit 0 that did not achieve it is retried, twice at most. A non-zero
- * exit is a real failure and is never retried.
+ * Runs through scripts/payload.mjs, which retries a start-up that stalls
+ * before reaching the CLI; run bare, such a stall exits 0 having done nothing
+ * at all, not a line of output (see that file).
+ *
+ * The exit status alone is still not trusted: each call names what it was
+ * supposed to achieve, and a silent exit 0 that did not achieve it is retried,
+ * twice at most. A non-zero exit is a real failure and is never retried.
  */
 const payloadOnReference = (achieved, ...args) => {
   let result;
@@ -168,7 +168,7 @@ const payloadOnReference = (achieved, ...args) => {
 };
 
 const spawnOnce = (...args) =>
-  spawnSync("npx", ["payload", ...args], {
+  spawnSync(process.execPath, [path.join(root, "scripts", "payload.mjs"), ...args], {
     cwd: root,
     encoding: "utf8",
     env: {
