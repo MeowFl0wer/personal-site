@@ -146,9 +146,9 @@ jobs:
           # Baselining must claim everything but that migration, and `migrate`
           # must then apply it without touching the data.
           if [ "$expected" -gt 1 ]; then
-            # Payload's CLI can exit 0 having done nothing (see payloadOnReference in
-            # scripts/baseline-migrations.mjs). Run, check the effect, retry twice;
-            # a non-zero exit is a real failure and is not retried.
+            # scripts/payload.mjs keeps Payload's CLI from exiting 0 having done
+            # nothing; the effect is still checked, and retried twice, as a second
+            # lock. A non-zero exit is a real failure and is not retried.
             payload_until() {
               local check=$1; shift
               for attempt in 1 2 3; do
@@ -163,7 +163,7 @@ jobs:
             sqlite3 data/baseline-behind.db \
               "update payload_migrations set batch = 2 where name = '$newest';"
             payload_until '[ "$(sqlite3 data/baseline-behind.db "select count(*) from payload_migrations where name = '"'"'$newest'"'"';")" = 0 ]' \
-              env DATABASE_URI=file:./data/baseline-behind.db npx payload migrate:down \
+              env DATABASE_URI=file:./data/baseline-behind.db node scripts/payload.mjs migrate:down \
               || { echo "::error::could not roll back $newest on the test copy"; exit 1; }
             sqlite3 data/baseline-behind.db \
               "delete from payload_migrations; insert into payload_migrations (name, batch) values ('dev', -1);"
