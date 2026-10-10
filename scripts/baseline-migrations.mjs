@@ -145,12 +145,32 @@ if (!isDevPush) {
 const referenceDir = fs.mkdtempSync(path.join(os.tmpdir(), "baseline-"));
 const reference = path.join(referenceDir, "reference.db");
 
-/** `payload <args>` against the reference, as a production deployment runs it. */
-const payloadOnReference = (...args) =>
+/**
+ * `payload <args>` against the reference, as a production deployment runs it.
+ *
+ * The exit status alone is not trusted. Payload's CLI starts with `void
+ * start()` and compiles through tsx's off-thread loader; now and then — most
+ * often on a cold tsx cache, and reliably in CI with stdin closed — the event
+ * loop empties first and the process exits 0 having done nothing at all, not a
+ * line of output. So each call names what it was supposed to achieve, and a
+ * silent exit 0 that did not achieve it is retried, twice at most. A non-zero
+ * exit is a real failure and is never retried.
+ */
+const payloadOnReference = (achieved, ...args) => {
+  let result;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    result = spawnOnce(...args);
+    if (result.status !== 0 || achieved()) return result;
+    if ((result.stdout || "").trim() || (result.stderr || "").trim()) return result;
+    process.stdout.write(`(payload ${args.join(" ")} exited 0 without output or effect; retrying) `);
+  }
+  return result;
+};
+
+const spawnOnce = (...args) =>
   spawnSync("npx", ["payload", ...args], {
     cwd: root,
     encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
     env: {
       ...process.env,
       DATABASE_URI: `file:${reference}`,
@@ -171,7 +191,7 @@ const giveUp = (what, result) => {
 };
 
 process.stdout.write(`Building a reference database from ${migrations.length} migration(s) … `);
-const built = payloadOnReference("migrate");
+const built = payloadOnReference(() => fs.existsSync(reference), "migrate");
 if (built.status !== 0 || !fs.existsSync(reference)) giveUp(`run the migrations against an empty database`, built);
 
 const applied = rows(reference, `select name from payload_migrations order by name;`).map(([name]) => name);
@@ -262,7 +282,8 @@ for (let count = migrations.length; count >= 1; count--) {
   const last = migrations[count - 1];
   process.stdout.write(`Not ${last}; rolling the reference back one migration … `);
   sqlite(reference, `update payload_migrations set batch = 2 where name = '${last}';`);
-  const down = payloadOnReference("migrate:down");
+  const rowsLeft = () => (fs.existsSync(reference) ? rows(reference, `select count(*) from payload_migrations;`)[0][0] : "");
+  const down = payloadOnReference(() => rowsLeft() === String(count - 1), "migrate:down");
   if (down.status !== 0) giveUp(`roll back ${last} on the reference`, down);
   const left = rows(reference, `select count(*) from payload_migrations;`)[0][0];
   if (left !== String(count - 1)) giveUp(`roll back ${last} on the reference: ${left} migration(s) left`, down);
