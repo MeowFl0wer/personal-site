@@ -1,5 +1,5 @@
 import type { GlobalConfig } from "payload";
-import { anyone, ownerOnly } from "../access";
+import { localOrOwner, ownerOnly } from "../access";
 import { revalidateEverything } from "../hooks/revalidate";
 import { SOCIAL_ICONS } from "@/components/ui/social-icons";
 
@@ -18,7 +18,7 @@ export const SiteSettings: GlobalConfig = {
     group: "Site",
     description: "Identity, SEO, navigation and feature toggles.",
   },
-  access: { read: anyone, update: ownerOnly },
+  access: { read: localOrOwner, update: ownerOnly },
   // Nav, SEO and the blog toggle appear on every page.
   hooks: { afterChange: [revalidateEverything] },
   fields: [

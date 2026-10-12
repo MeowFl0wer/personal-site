@@ -40,6 +40,17 @@ export const Media: CollectionConfig = {
     delete: ownerOnly,
   },
   upload: {
+    /* Browsers may keep a file for an hour; shared caches may not keep it at
+       all. Some of these files are private, and the file route checks the
+       grant on every request — but a CDN that stored one response would serve
+       it to the next person without asking. Cloudflare happens not to cache
+       these today (cf-cache-status: DYNAMIC, 2026-10-12); `private` makes that
+       a rule rather than luck. The hook does not see which file it is, so it
+       applies to all of them; nothing public lost anything it had. */
+    modifyResponseHeaders: ({ headers }) => {
+      headers.set("Cache-Control", "private, max-age=3600");
+      return headers;
+    },
     // Derivatives are generated once, on upload. `withoutEnlargement` means a
     // small source is never upscaled into a blurry "large".
     imageSizes: [

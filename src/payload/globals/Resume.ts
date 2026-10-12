@@ -1,5 +1,5 @@
 import type { GlobalConfig } from "payload";
-import { anyone, ownerOnly } from "../access";
+import { localOrOwner, ownerOnly } from "../access";
 import { previewUrl } from "../preview";
 import { revalidateGlobal } from "../hooks/revalidate";
 
@@ -24,7 +24,7 @@ export const Resume: GlobalConfig = {
     livePreview: { url: () => previewUrl("resume", "/about") },
     preview: () => previewUrl("resume", "/about"),
   },
-  access: { read: anyone, update: ownerOnly },
+  access: { read: localOrOwner, update: ownerOnly },
   versions: { drafts: { autosave: { interval: 800 } }, max: 30 },
   hooks: { afterChange: [revalidateGlobal(["/about"])] },
   fields: [
